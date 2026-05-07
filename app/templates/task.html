@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Assignments | Aethelgard BCA Portal{% endblock %}
+
+{% block head %}
+<style>
+  .filter-tabs { display:flex; gap:8px; margin-bottom:2rem; flex-wrap:wrap; }
+  .filter-tab { padding:8px 18px; border:1px solid var(--border); border-radius:99px; background:transparent; color:var(--muted); cursor:pointer; font-size:13px; font-family:'Inter',sans-serif; font-weight:600; transition:all 0.3s; }
+  .filter-tab:hover { border-color:var(--primary); color:var(--primary); }
+  .filter-tab.active { background:var(--primary); color:var(--surface); border-color:var(--primary); }
+  .task-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px 24px; margin-bottom:16px; transition:all 0.4s; position:relative; overflow:hidden; }
+  .task-card:hover { border-color:var(--primary); }
+  .task-card.completed { opacity:0.55; }
+  .task-card.completed h3 { text-decoration:line-through; text-decoration-color:var(--primary); }
+  .task-header { display:flex; justify-content:space-between; align-items:start; margin-bottom:10px; }
+  .task-actions { display:flex; gap:6px; }
+  .task-actions button { background:var(--surface); border:1px solid var(--border); border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); transition:all 0.3s; }
+  .task-actions button:hover { border-color:var(--primary); color:var(--primary); }
+  .priority-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+  .priority-high { background:#ff6b6b; }
+  .priority-medium { background:#ffa726; }
+  .priority-low { background:#4ecdc4; }
+  .countdown { font-size:11px; color:var(--primary); font-weight:700; letter-spacing:1px; margin-top:8px; }
+  .empty-tasks { text-align:center; padding:4rem 1rem; color:var(--muted); }
+  .empty-tasks span { font-size:64px; color:var(--primary); opacity:0.3; }
+  .api-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(78,205,196,0.1); border:1px solid rgba(78,205,196,0.2); border-radius:6px; padding:3px 10px; font-size:10px; color:#4ecdc4; font-weight:700; letter-spacing:1px; }
+</style>
+{% endblock %}
+
+{% block nav_task %}active{% endblock %}
+{% block nav_mobile_task %}active{% endblock %}
+
+{% block content_area_style %}style="max-width:900px;"{% endblock %}
+
+{% block content %}
+    <section class="fade-up" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h1 style="font-family:'Newsreader',serif; font-size:2rem; color:var(--primary); margin-bottom:4px;">Academic Tasks</h1>
+        <p style="color:var(--muted);">Manage your assignments &amp; deadlines &nbsp;<span class="api-badge"><span class="material-symbols-outlined" style="font-size:12px;">database</span>SQLite DB</span></p>
+      </div>
+      <button class="btn-gold" onclick="openModal()"><span class="material-symbols-outlined" style="font-size:18px;">add</span>New Task</button>
+    </section>
+
+    <!-- Stats -->
+    <div class="grid-3 fade-up fade-up-d1" style="margin-bottom:2rem;">
+      <div class="stat-card" style="padding:16px; text-align:center;">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value" id="stat-pending" style="font-size:2rem;">—</div>
+      </div>
+      <div class="stat-card" style="padding:16px; text-align:center;">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value" id="stat-done" style="font-size:2rem; color:var(--success);">—</div>
+      </div>
+      <div class="stat-card" style="padding:16px; text-align:center;">
+        <div class="stat-label">Overdue</div>
+        <div class="stat-value" id="stat-overdue" style="font-size:2rem; color:var(--error);">—</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-tabs fade-up fade-up-d2">
+      <button class="filter-tab active" onclick="setFilter('all',this)">All</button>
+      <button class="filter-tab" onclick="setFilter('pending',this)">Pending</button>
+      <button class="filter-tab" onclick="setFilter('completed',this)">Completed</button>
+      <button class="filter-tab" onclick="setFilter('overdue',this)">Overdue</button>
+    </div>
+
+    <!-- Task List -->
+    <div id="task-list" class="fade-up fade-up-d3">
+      <div class="empty-tasks"><span class="material-symbols-outlined">hourglass_top</span><p style="margin-top:1rem;">Loading tasks from database...</p></div>
+    </div>
+  </div>
+
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+      <h2 id="modal-title" style="margin-bottom:0;">New Task</h2>
+      <button onclick="closeModal()" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:24px;" class="material-symbols-outlined">close</button>
+    </div>
+    <form onsubmit="return saveTask(event)">
+      <input type="hidden" id="edit-id"/>
+      <div class="form-group">
+        <label class="form-label">Task Title</label>
+        <input class="form-input" id="t-title" placeholder="e.g. Library Management System" required/>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label class="form-label">Subject</label>
+          <select class="form-input" id="t-subject" required>
+            <option value="DBMS">DBMS</option>
+            <option value="Web Technologies">Web Technologies</option>
+            <option value="DSA">Data Structures &amp; Algorithms</option>
+            <option value="Computer Networks">Computer Networks</option>
+            <option value="Software Engineering">Software Engineering</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="form-input" id="t-priority">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Due Date &amp; Time</label>
+        <input class="form-input" id="t-due" type="datetime-local" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description (optional)</label>
+        <textarea class="form-input" id="t-desc" rows="3" placeholder="Task details..." style="resize:vertical;"></textarea>
+      </div>
+      <button type="submit" class="btn-gold" style="width:100%; justify-content:center; margin-top:8px;">
+        <span class="material-symbols-outlined" style="font-size:18px;">save</span> Save to Database
+      </button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allTasks = [];
+let currentFilter = 'all';
+
+// Load all tasks from Flask API (SQLite)
+async function loadTasks() {
+  const r = await api('GET', '/api/tasks');
+  if (!r.ok) { window.location.href = '/login'; return; }
+  allTasks = r.data;
+  renderTasks();
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTasks();
+}
+
+function renderTasks() {
+  const search = (document.getElementById('task-search')?.value || '').toLowerCase();
+  const now = new Date();
+  let filtered = allTasks.filter(function(t) {
+    if (search && !t.title.toLowerCase().includes(search) && !t.subject.toLowerCase().includes(search)) return false;
+    if (currentFilter === 'pending') return !t.done && new Date(t.due) > now;
+    if (currentFilter === 'completed') return t.done;
+    if (currentFilter === 'overdue') return !t.done && new Date(t.due) < now;
+    return true;
+  });
+
+  const pending = allTasks.filter(t => !t.done && new Date(t.due) > now).length;
+  const done = allTasks.filter(t => t.done).length;
+  const overdue = allTasks.filter(t => !t.done && new Date(t.due) < now).length;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-overdue').textContent = overdue;
+
+  const container = document.getElementById('task-list');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-tasks"><span class="material-symbols-outlined">task_alt</span><p style="margin-top:1rem;font-size:1.1rem;">No tasks found</p></div>';
+    return;
+  }
+  container.innerHTML = filtered.map(function(t) {
+    const isOverdue = !t.done && new Date(t.due) < now;
+    return '<div class="task-card' + (t.done ? ' completed' : '') + '">' +
+      '<div class="task-header"><div>' +
+      '<span class="priority-dot priority-' + t.priority + '"></span>' +
+      '<span class="badge ' + (isOverdue ? 'badge-danger' : t.done ? 'badge-success' : 'badge-info') + '">' +
+      (t.done ? 'Completed' : isOverdue ? 'Overdue' : t.priority.charAt(0).toUpperCase()+t.priority.slice(1)+' Priority') + '</span>' +
+      '</div><div class="task-actions">' +
+      (!t.done ? '<button onclick="triggerUpload('+t.id+')" title="Upload Assignment"><span class="material-symbols-outlined" style="font-size:16px;">upload_file</span></button>' : '') +
+      (!t.done ? '<button onclick="toggleDone('+t.id+')" title="Mark Complete"><span class="material-symbols-outlined" style="font-size:16px;">check</span></button>' : '') +
+      '<button onclick="editTask('+t.id+')" title="Edit"><span class="material-symbols-outlined" style="font-size:16px;">edit</span></button>' +
+      '<button onclick="deleteTask('+t.id+')" title="Delete"><span class="material-symbols-outlined" style="font-size:16px;">delete</span></button>' +
+      '</div></div>' +
+      '<h3 style="font-family:Newsreader,serif;font-size:1.15rem;margin-bottom:4px;">' + t.title + '</h3>' +
+      '<p style="font-size:13px;color:var(--muted);font-style:italic;">' + t.subject + '</p>' +
+      (t.submission_file ? '<div style="margin-top:8px;"><a href="/static/uploads/'+t.submission_file+'" target="_blank" style="font-size:12px; color:var(--primary); font-weight:600;"><span class="material-symbols-outlined" style="font-size:14px; vertical-align:text-bottom;">download</span> '+t.submission_file+'</a></div>' : '') +
+      (t.desc ? '<p style="font-size:13px;color:var(--muted);margin-top:8px;">' + t.desc + '</p>' : '') +
+      '<div class="countdown">' + (t.done ? '✓ Submitted' : '⏱ ' + formatCountdown(t.due)) + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+async function toggleDone(id) {
+  const task = allTasks.find(t => t.id === id);
+  if (!task) return;
+  const r = await api('PUT', '/api/tasks/' + id, { done: !task.done });
+  if (r.ok) { 
+    showToast('Task updated!', 'check_circle'); 
+    if (!task.done) {
+      // Trigger confetti if marking as done
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+    }
+    loadTasks(); 
+  }
+  else showToast('Error: ' + (r.data.error || 'Unknown'), 'error');
+}
+
+let currentUploadTaskId = null;
+function triggerUpload(taskId) {
+  currentUploadTaskId = taskId;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.onchange = handleFileUpload;
+  input.click();
+}
+
+async function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file || !currentUploadTaskId) return;
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  showToast('Uploading...', 'cloud_upload');
+  const res = await fetch('/api/tasks/' + currentUploadTaskId + '/upload', {
+    method: 'POST',
+    body: formData
+  });
+  const r = await res.json();
+  if (res.ok && r.success) {
+    showToast('File uploaded successfully!', 'cloud_done');
+    loadTasks();
+  } else {
+    showToast('Error: ' + (r.error || 'Failed to upload'), 'error');
+  }
+}
+
+async function deleteTask(id) {
+  if (!confirm('Delete this task from the database?')) return;
+  const r = await api('DELETE', '/api/tasks/' + id);
+  if (r.ok) { showToast('Task deleted from database', 'delete'); loadTasks(); }
+}
+
+function editTask(id) {
+  const t = allTasks.find(t => t.id === id);
+  if (!t) return;
+  document.getElementById('modal-title').textContent = 'Edit Task';
+  document.getElementById('edit-id').value = id;
+  document.getElementById('t-title').value = t.title;
+  document.getElementById('t-subject').value = t.subject;
+  document.getElementById('t-priority').value = t.priority;
+  document.getElementById('t-due').value = new Date(t.due).toISOString().slice(0,16);
+  document.getElementById('t-desc').value = t.desc || '';
+  openModal();
+}
+
+function openModal() { document.getElementById('task-modal').classList.add('active'); }
+function closeModal() {
+  document.getElementById('task-modal').classList.remove('active');
+  document.getElementById('modal-title').textContent = 'New Task';
+  document.getElementById('edit-id').value = '';
+  document.getElementById('t-title').value = '';
+  document.getElementById('t-desc').value = '';
+}
+
+async function saveTask(e) {
+  e.preventDefault();
+  const editId = document.getElementById('edit-id').value;
+  const payload = {
+    title: document.getElementById('t-title').value,
+    subject: document.getElementById('t-subject').value,
+    priority: document.getElementById('t-priority').value,
+    due: new Date(document.getElementById('t-due').value).toISOString(),
+    desc: document.getElementById('t-desc').value
+  };
+  let r;
+  if (editId) r = await api('PUT', '/api/tasks/' + editId, payload);
+  else r = await api('POST', '/api/tasks', payload);
+  if (r.ok) {
+    showToast(editId ? 'Task updated in DB!' : 'Task saved to DB!', editId ? 'edit' : 'add_task');
+    closeModal(); loadTasks();
+  } else showToast('Error: ' + (r.data.error || 'Unknown'), 'error');
+  return false;
+}
+
+// Update countdowns every minute
+setInterval(function() {
+  document.querySelectorAll('.countdown').forEach(function(el) {
+    if (el.textContent.includes('✓')) return;
+    const task = allTasks.find(t => el.closest('.task-card') && !t.done);
+    renderTasks();
+  });
+}, 60000);
+
+document.addEventListener('DOMContentLoaded', loadTasks);
+</script>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Reading: {{ book.title }} | Aethelgard{% endblock %}
+
+{% block head %}
+<style>
+.pdf-viewer-container {
+    height: calc(100vh - 150px);
+    background: #e2e8f0;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    overflow-y: auto;
+}
+.pdf-page {
+    width: 100%;
+    max-width: 800px;
+    background: #ffffff;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 4rem;
+    color: #334155;
+    font-family: 'Times New Roman', serif;
+}
+.pdf-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #0f172a;
+}
+.pdf-author {
+    font-size: 1.2rem;
+    text-align: center;
+    color: #64748b;
+    margin-bottom: 4rem;
+    font-style: italic;
+}
+.pdf-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <a href="/library" style="color: var(--primary-color); text-decoration: none; margin-bottom: 1rem; display: inline-block;">
+            <i class="fa-solid fa-arrow-left"></i> Back to Library
+        </a>
+        <h2 style="margin: 0;">PDF Reader</h2>
+    </div>
+</div>
+
+<div class="pdf-viewer-container">
+    <div class="pdf-page">
+        <div class="pdf-title">{{ book.title }}</div>
+        <div class="pdf-author">By {{ book.author }}</div>
+        
+        <div class="pdf-content">
+            {% if book.subject == 'DSA' %}
+                <h3>Chapter 1: Introduction to Data Structures and Algorithms</h3>
+                <p>A data structure is a particular way of organizing data in a computer so that it can be used effectively. The idea is to reduce the space and time complexities of different tasks. Data structures are generally based on the ability of a computer to fetch and store data at any place in its memory, specified by a pointer.</p>
+                <p>Algorithms, on the other hand, are a finite sequence of well-defined, computer-implementable instructions, typically to solve a class of problems or to perform a computation. In this chapter, we discuss asymptotic notation (Big O, Big Omega, Big Theta) which provides a framework for analyzing the efficiency of algorithms regardless of hardware constraints.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 2: Linear Data Structures</h4>
+                <p>Arrays and Linked Lists form the fundamental linear structures. An array is a collection of items stored at contiguous memory locations. The idea is to store multiple items of the same type together. This makes it easier to calculate the position of each element by simply adding an offset to a base value. Conversely, a Linked List is a linear collection of data elements whose order is not given by their physical placement in memory. Instead, each element points to the next, forming a chain.</p>
+                <p>Stacks (LIFO) and Queues (FIFO) are abstract data types that restrict operations to specific ends of the collection. Stacks are heavily used in compiler syntax parsing, undo mechanisms, and backtracking algorithms. Queues are essential for scheduling algorithms, breadth-first search traversals, and handling asynchronous requests.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 3: Trees and Graphs</h4>
+                <p>A Tree is a non-linear data structure consisting of nodes connected by edges, mimicking a hierarchical tree structure. Binary Search Trees (BST) provide efficient O(log n) time complexity for search, insertion, and deletion operations, provided the tree remains balanced (like AVL or Red-Black trees).</p>
+                <p>Graphs represent pairwise relationships between objects, formally defined as G = (V, E) where V is a set of vertices and E is a set of edges. Graph theory is critical for solving routing problems, analyzing social networks, and executing page ranking algorithms. Key traversal algorithms include Breadth-First Search (BFS) and Depth-First Search (DFS).</p>
+
+            {% elif book.subject == 'DBMS' %}
+                <h3>Chapter 1: Database System Concepts</h3>
+                <p>A Database Management System (DBMS) is a software system designed to store, retrieve, and manage data. The primary goal of a DBMS is to provide a way to store and retrieve database information that is both convenient and efficient. Early systems used hierarchical and network models, but the relational model, proposed by E.F. Codd, revolutionized the industry by abstracting the physical data storage away from the logical schema.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 2: The Relational Model and Normalization</h4>
+                <p>The relational model uses a collection of tables to represent both data and the relationships among those data. Each table has multiple columns, and each column has a unique name. Normalization is the process of organizing data in a database to avoid data redundancy, insertion anomalies, update anomalies, and deletion anomalies.</p>
+                <p>The normal forms (1NF, 2NF, 3NF, BCNF) rely on the concept of functional dependencies. For example, a relation is in Second Normal Form (2NF) if it is in 1NF and no non-prime attribute is dependent on any proper subset of any candidate key of the table.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 3: Transaction Management and ACID Properties</h4>
+                <p>A transaction is a single logical unit of work which accesses and possibly modifies the contents of a database. Transactions access data using read and write operations. To maintain data integrity, transactions must adhere to the ACID properties:</p>
+                <ul>
+                    <li><strong>Atomicity:</strong> Ensures that all operations within the work unit are completed successfully; otherwise, the transaction is aborted.</li>
+                    <li><strong>Consistency:</strong> Ensures that the database properly changes states upon a successfully committed transaction.</li>
+                    <li><strong>Isolation:</strong> Enables transactions to operate independently of and transparent to each other.</li>
+                    <li><strong>Durability:</strong> Ensures that the result or effect of a committed transaction persists in case of a system failure.</li>
+                </ul>
+
+            {% elif book.subject == 'Computer Networks' %}
+                <h3>Chapter 1: Introduction to Data Communications</h3>
+                <p>A computer network is a set of devices (often referred to as nodes) connected by communication links. A node can be a computer, printer, or any other device capable of sending and/or receiving data generated by other nodes on the network. The effectiveness of a data communications system depends on four fundamental characteristics: delivery, accuracy, timeliness, and jitter.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 2: The OSI and TCP/IP Models</h4>
+                <p>The Open Systems Interconnection (OSI) model is a conceptual framework used to comprehend and implement protocols in seven distinct layers: Physical, Data Link, Network, Transport, Session, Presentation, and Application. Each layer serves the layer above it and is served by the layer below it.</p>
+                <p>In practice, the Internet operates on the TCP/IP protocol suite, which condenses these seven layers into four: Network Access, Internet, Transport, and Application. The Transport layer uses protocols like TCP (Transmission Control Protocol) for reliable, connection-oriented data delivery, and UDP (User Datagram Protocol) for faster, connectionless transmissions.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 3: IP Addressing and Routing</h4>
+                <p>IPv4 addresses are 32-bit logical addresses assigned to devices participating in a computer network. Because of IPv4 address exhaustion, IPv6 (which uses 128-bit addresses) is being heavily deployed. Routing is the process of selecting a path for traffic in a network, or between or across multiple networks.</p>
+                <p>Routers operate at the Network Layer (Layer 3) and use algorithms like Dijkstra's Shortest Path First (used in OSPF) or Bellman-Ford (used in RIP) to construct routing tables and make forwarding decisions.</p>
+
+            {% elif book.subject == 'OS' %}
+                <h3>Chapter 1: Operating System Principles</h3>
+                <p>An Operating System (OS) is system software that manages computer hardware, software resources, and provides common services for computer programs. Time-sharing operating systems schedule tasks for efficient use of the system and may also include accounting software for cost allocation of processor time, mass storage, printing, and other resources.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 2: Process Management and Concurrency</h4>
+                <p>A process is essentially a program in execution. The OS is responsible for process creation, scheduling, and termination. Modern operating systems use multithreading, allowing multiple threads to exist within the context of a single process, sharing the process's resources but executing independently.</p>
+                <p>Concurrency control handles situations where multiple processes or threads access shared data simultaneously. The Critical Section problem is solved using synchronization primitives like Mutexes (Mutual Exclusions) and Semaphores to prevent race conditions and ensure data consistency.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 3: Memory Management and Virtual Memory</h4>
+                <p>Memory management is the process of controlling and coordinating computer memory, assigning portions called blocks to various running programs to optimize overall system performance. Virtual memory is a technique that gives an application program the impression that it has contiguous working memory, while in fact it may be physically fragmented and may even overflow on to disk storage.</p>
+                <p>Paging and Segmentation are two methods used to implement virtual memory. A Page Fault occurs when a program attempts to access a block of memory that is not currently stored in the physical RAM, triggering the OS to fetch the page from the hard drive (swap space).</p>
+
+            {% elif book.subject == 'Software Engineering' %}
+                <h3>Chapter 1: The Software Development Life Cycle (SDLC)</h3>
+                <p>Software Engineering is the application of a systematic, disciplined, quantifiable approach to the development, operation, and maintenance of software. The SDLC provides a framework for planning, creating, testing, and deploying an information system. The core phases include Requirement Analysis, Design, Implementation (Coding), Testing, Deployment, and Maintenance.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 2: Software Process Models</h4>
+                <p>Historically, the Waterfall Model was the standard approach, characterized by a linear, sequential design process. However, its rigidity led to the adoption of iterative and incremental models. Agile methodologies (such as Scrum and Kanban) have become the industry standard. Agile promotes adaptive planning, evolutionary development, early delivery, and continual improvement, encouraging rapid and flexible response to change.</p>
+                <p>Another notable model is the Spiral Model, which combines elements of both design and prototyping-in-stages, in an effort to combine advantages of top-down and bottom-up concepts. It heavily emphasizes risk analysis.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 3: Software Testing and Quality Assurance</h4>
+                <p>Software testing is an investigation conducted to provide stakeholders with information about the quality of the software product or service under test. It encompasses Unit Testing (testing individual components), Integration Testing (testing combinations of components), System Testing (testing the complete system), and Acceptance Testing.</p>
+                <p>Test-Driven Development (TDD) is a software development process relying on software requirements being converted to test cases before software is fully developed, and tracking all software development by repeatedly testing the software against all test cases.</p>
+
+            {% else %}
+                <h3>Chapter 1: Academic Introduction</h3>
+                <p>This is a comprehensive study module for {{ book.subject }}. As you progress through your Bachelor of Computer Applications (BCA) curriculum, mastering this subject is crucial for your foundational understanding of computer science principles.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 2: Core Fundamentals</h4>
+                <p>The academic concepts presented here will bridge the gap between theoretical knowledge and practical application. We strongly encourage students to not only read the provided textual material but also implement the algorithms and theories in a practical environment. Whether writing SQL queries, compiling C++ data structures, or designing network topologies in packet tracer, hands-on experience is the best teacher.</p>
+                
+                <h4 style="margin-top: 2rem;">Chapter 3: Advanced Topics and Application</h4>
+                <p>As you dive deeper into {{ book.subject }}, you will uncover advanced topics that drive modern technology. Always remember to reference peer-reviewed journals, official documentation, and standard textbooks to supplement this digital material. The journey of a computer scientist is one of continuous learning and adaptation.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

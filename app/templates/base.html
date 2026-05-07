@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{% block title %}Aethelgard BCA Portal{% endblock %}</title>
+<link rel="stylesheet" href="/static/styles.css"/>
+{% block head %}{% endblock %}
+</head>
+<body>
+<div class="app-layout">
+
+<!-- Sidebar Overlay (Mobile) -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon"><span class="material-symbols-outlined">school</span></div>
+    <div><h1>Aethelgard</h1><p>BCA Portal</p></div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-link {% block nav_dashboard %}{% endblock %}" href="/"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+    <a class="nav-link {% block nav_schedule %}{% endblock %}" href="/schedule"><span class="material-symbols-outlined">calendar_month</span>Schedule</a>
+    <a class="nav-link {% block nav_task %}{% endblock %}" href="/task"><span class="material-symbols-outlined">menu_book</span>Assignments</a>
+    <a class="nav-link {% block nav_cgpa %}{% endblock %}" href="/cgpa-predictor"><span class="material-symbols-outlined">calculate</span>CGPA Predictor</a>
+    <a class="nav-link {% block nav_library %}{% endblock %}" href="/library"><span class="material-symbols-outlined">local_library</span>E-Library</a>
+    <a class="nav-link {% block nav_study %}{% endblock %}" href="/study-room"><span class="material-symbols-outlined">groups</span>Study Room</a>
+    <a class="nav-link {% block nav_profile %}{% endblock %}" href="/profile"><span class="material-symbols-outlined">person</span>Profile</a>
+    <a class="nav-link {% block nav_notif %}{% endblock %}" href="/notifications" style="position:relative;"><span class="material-symbols-outlined">notifications</span>Notifications<span id="notif-badge" style="background:var(--primary);color:var(--surface);border-radius:99px;font-size:10px;font-weight:700;padding:2px 6px;margin-left:auto;display:none;"></span></a>
+  </nav>
+  <button class="sidebar-btn" onclick="location.href='/task'">+ Add Task</button>
+</aside>
+
+<!-- Main -->
+<main class="main-content">
+  <header class="top-header">
+    <button class="hamburger-btn" id="hamburger-toggle" aria-label="Toggle navigation"><span class="bar"></span></button>
+    <div class="top-header-mobile-title">Aethelgard Portal</div>
+    <div class="header-search">
+      <span class="material-symbols-outlined">search</span>
+      <input type="text" placeholder="Search portal..." id="search-input"/>
+      <button onclick="startVoiceCommand()" title="Voice Command" style="background:transparent; border:none; color:var(--primary); cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:8px;">
+        <span class="material-symbols-outlined" id="voice-icon">mic</span>
+      </button>
+    </div>
+    <div class="live-clock" id="live-clock"></div>
+    <div class="header-actions">
+      <button id="theme-toggle" class="material-symbols-outlined" onclick="toggleTheme()" style="background:transparent; border:none; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; color:var(--text); cursor:pointer; transition:all 0.3s; margin-right: 10px;">light_mode</button>
+      <a href="/notifications" style="position:relative; display:inline-flex;">
+        <button class="material-symbols-outlined">notifications</button>
+        <span id="notif-badge-header" style="background:var(--primary);color:var(--surface);border-radius:99px;font-size:9px;font-weight:700;padding:1px 5px;position:absolute;top:0;right:0;display:none;"></span>
+      </a>
+      <a href="/profile" class="header-avatar">
+        <img src="https://ui-avatars.com/api/?name=User&background=1B263B&color=C5A059&bold=true" alt="Avatar" id="header-avatar"/>
+      </a>
+    </div>
+  </header>
+
+  <div class="content-area" {% block content_area_style %}{% endblock %}>
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <a class="{% block nav_mobile_dashboard %}{% endblock %}" href="/"><span class="material-symbols-outlined">home</span><span>Home</span></a>
+  <a class="{% block nav_mobile_schedule %}{% endblock %}" href="/schedule"><span class="material-symbols-outlined">calendar_today</span><span>Schedule</span></a>
+  <a class="{% block nav_mobile_task %}{% endblock %}" href="/task"><span class="material-symbols-outlined">history_edu</span><span>Tasks</span></a>
+  <a class="{% block nav_mobile_profile %}{% endblock %}" href="/profile"><span class="material-symbols-outlined">person</span><span>Profile</span></a>
+</nav>
+</div>
+
+<div id="global-toast" class="toast"></div>
+
+<!-- Chatbot Widget -->
+<style>
+  .chat-widget {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    z-index: 1000;
+  }
+  .chat-fab {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 15px rgba(197, 160, 89, 0.4);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .chat-fab:hover { transform: scale(1.05); }
+  
+  .chat-window {
+    position: absolute;
+    bottom: 75px;
+    right: 0;
+    width: 350px;
+    height: 450px;
+    background: #0f172a; /* Solid dark background to prevent transparency */
+    border: 1px solid var(--primary-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .chat-window.open { transform: scale(1); }
+  
+  .chat-header {
+    background: var(--surface-light);
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .chat-header h3 { margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+  .chat-close { cursor: pointer; color: var(--text-muted); }
+  
+  .chat-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg { max-width: 80%; padding: 10px 14px; border-radius: 14px; font-size: 0.95rem; line-height: 1.4; word-wrap: break-word;}
+  .msg.bot { background: var(--surface-light); border-bottom-left-radius: 4px; align-self: flex-start; }
+  .msg.user { background: var(--primary-color); color: var(--surface); border-bottom-right-radius: 4px; align-self: flex-end; }
+  
+  .typing-indicator {
+    display: none;
+    align-self: flex-start;
+    background: var(--surface-light);
+    padding: 12px 16px;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+  }
+  .typing-indicator span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: typing 1.4s infinite ease-in-out both;
+  }
+  .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+  .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes typing {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+  
+  .chat-input {
+    padding: 15px;
+    background: var(--surface-light);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+  }
+  .chat-input input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 10px;
+    border-radius: 20px;
+    outline: none;
+  }
+  .chat-input button {
+    background: var(--primary-color);
+    color: var(--surface);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+
+<div class="chat-widget">
+  <div class="chat-window" id="chat-window">
+    <div class="chat-header">
+      <h3><i class="fa-solid fa-robot" style="color:var(--primary-color)"></i> AethelBot</h3>
+      <i class="fa-solid fa-xmark chat-close" onclick="toggleChat()"></i>
+    </div>
+    <div class="chat-body" id="chat-body">
+      <div class="msg bot">Hi there! 👋 I'm AethelBot. Ask me about your exams, library, or CGPA!</div>
+      <div class="typing-indicator" id="typing-indicator">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+    <form class="chat-input" onsubmit="sendChatMessage(event)">
+      <input type="text" id="chat-input" placeholder="Type a message..." required autocomplete="off">
+      <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+  </div>
+  
+  <div class="chat-fab" onclick="toggleChat()" style="overflow: hidden;">
+    <img src="/static/bot_avatar.png" alt="AethelBot" style="width: 100%; height: 100%; object-fit: cover;">
+  </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.1/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="/static/app.js"></script>
+<script>
+  // Theme Toggle Logic
+  function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    document.getElementById('theme-toggle').innerText = isLight ? 'dark_mode' : 'light_mode';
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+      document.body.classList.add('light-mode');
+      document.getElementById('theme-toggle').innerText = 'dark_mode';
+    }
+  });
+
+  // Chatbot logic
+  function toggleChat() {
+    document.getElementById('chat-window').classList.toggle('open');
+    setTimeout(() => { document.getElementById('chat-input').focus(); }, 300);
+  }
+
+  // Phase 6: Voice Command Logic
+  const recognition = window.SpeechRecognition || window.webkitSpeechRecognition ? new (window.SpeechRecognition || window.webkitSpeechRecognition)() : null;
+  if (recognition) {
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      document.getElementById('voice-icon').style.color = 'var(--error)';
+      showToast('Listening for command...', 'mic');
+    };
+
+    recognition.onresult = (event) => {
+      const command = event.results[0][0].transcript.toLowerCase();
+      console.log('Voice Command:', command);
+      handleVoiceCommand(command);
+    };
+
+    recognition.onend = () => {
+      document.getElementById('voice-icon').style.color = 'var(--primary)';
+    };
+
+    recognition.onerror = () => {
+      showToast('Speech recognition error', 'error');
+      document.getElementById('voice-icon').style.color = 'var(--primary)';
+    };
+  }
+
+  function startVoiceCommand() {
+    if (!recognition) return showToast('Speech recognition not supported', 'error');
+    recognition.start();
+  }
+
+  function handleVoiceCommand(cmd) {
+    if (cmd.includes('library') || cmd.includes('books')) window.location.href = '/library';
+    else if (cmd.includes('dashboard') || cmd.includes('home')) window.location.href = '/';
+    else if (cmd.includes('task') || cmd.includes('assignment')) window.location.href = '/task';
+    else if (cmd.includes('profile')) window.location.href = '/profile';
+    else if (cmd.includes('calculator') || cmd.includes('gpa')) window.location.href = '/cgpa-predictor';
+    else if (cmd.includes('new task') || cmd.includes('add task')) {
+       if (window.location.pathname === '/task') openModal();
+       else window.location.href = '/task?action=new';
+    }
+    else if (cmd.includes('chat') || cmd.includes('bot')) toggleChat();
+    else if (cmd.includes('logout')) logout();
+    else showToast('Unknown command: ' + cmd, 'warning');
+  }
+
+  async function sendChatMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if(!msg) return;
+    
+    appendMessage(msg, 'user');
+    input.value = '';
+    
+    // Show typing
+    const typing = document.getElementById('typing-indicator');
+    const chatBody = document.getElementById('chat-body');
+    chatBody.appendChild(typing); // move to bottom
+    typing.style.display = 'block';
+    chatBody.scrollTop = chatBody.scrollHeight;
+    
+    try {
+      const res = await api('POST', '/api/chat', { message: msg });
+      
+      // Simulate network delay for realism
+      setTimeout(() => {
+        typing.style.display = 'none';
+        if(res.ok) {
+          appendMessage(res.data.response, 'bot');
+        } else {
+          appendMessage("Sorry, I'm having trouble connecting right now.", 'bot');
+        }
+      }, 600 + Math.random() * 800);
+      
+    } catch(err) {
+      typing.style.display = 'none';
+      appendMessage("Error communicating with server.", 'bot');
+    }
+  }
+  
+  function appendMessage(text, sender) {
+    const chatBody = document.getElementById('chat-body');
+    const div = document.createElement('div');
+    div.className = `msg ${sender}`;
+    div.textContent = text;
+    
+    // Insert before typing indicator
+    const typing = document.getElementById('typing-indicator');
+    chatBody.insertBefore(div, typing);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

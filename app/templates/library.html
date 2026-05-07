@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}E-Library | Aethelgard{% endblock %}
+
+{% block head %}
+<style>
+.library-tabs {
+    display: flex; gap: 6px; flex-wrap: wrap; padding: 4px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    margin-bottom: 2rem;
+}
+.lib-tab {
+    padding: 10px 20px; border: none; background: transparent; color: var(--muted);
+    font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 10px;
+    transition: all 0.3s; font-family: 'Inter', sans-serif;
+}
+.lib-tab:hover { color: var(--primary); background: var(--primary-dim); }
+.lib-tab.active { background: var(--primary); color: var(--bg); box-shadow: 0 2px 10px rgba(212,175,55,0.3); }
+
+.books-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;
+}
+@media(max-width:480px) { .books-grid { grid-template-columns: 1fr; } }
+
+.book-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 1.5rem; position: relative; transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+    overflow: hidden;
+}
+.book-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary)); opacity: 0;
+    transition: opacity 0.3s;
+}
+.book-card:hover {
+    transform: translateY(-6px); border-color: var(--primary);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.3), 0 0 15px rgba(212,175,55,0.05);
+}
+.book-card:hover::before { opacity: 1; }
+
+.book-icon {
+    width: 60px; height: 60px; border-radius: 12px; display: flex;
+    align-items: center; justify-content: center; margin-bottom: 1rem;
+    background: var(--primary-dim); border: 1px solid var(--border);
+}
+.book-title { font-family: 'Newsreader', serif; font-size: 1.1rem; font-weight: 600; color: var(--text-bright); margin-bottom: 0.5rem; line-height: 1.4; }
+.book-author { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+.bookmark-btn {
+    position: absolute; top: 1rem; right: 1rem; background: var(--surface);
+    border: 1px solid var(--border); color: var(--muted); width: 36px; height: 36px;
+    border-radius: 8px; cursor: pointer; transition: all 0.3s;
+    display: flex; align-items: center; justify-content: center;
+}
+.bookmark-btn:hover { color: var(--primary); border-color: var(--primary); }
+.bookmark-btn.saved { color: var(--primary); background: var(--primary-dim); border-color: var(--primary); }
+
+.lib-search {
+    display: flex; align-items: center; gap: 10px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px;
+    max-width: 400px; width: 100%; transition: all 0.3s;
+}
+.lib-search:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+.lib-search input { background: transparent; border: none; outline: none; color: var(--text-bright); font-size: 14px; width: 100%; }
+.lib-search input::placeholder { color: var(--muted); }
+
+.lib-stats { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.lib-stat { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.lib-stat strong { color: var(--primary); font-size: 1.1rem; }
+</style>
+{% endblock %}
+
+{% block nav_library %}active{% endblock %}
+
+{% block content %}
+<section class="fade-up" style="margin-bottom: 1.5rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1.5rem;">
+        <div>
+            <h1 style="font-family:'Newsreader',serif; font-size:2rem; color:var(--primary); margin-bottom:4px;">Digital E-Library</h1>
+            <p style="color:var(--muted);">Access textbooks, lecture notes, and study materials</p>
+        </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1.5rem;">
+        <div class="lib-search">
+            <span class="material-symbols-outlined" style="color:var(--muted); font-size:20px;">search</span>
+            <input type="text" placeholder="Search books by title, author or subject..." id="lib-search-input" oninput="filterBooks()">
+        </div>
+        <div class="lib-stats" id="lib-stats">
+            <div class="lib-stat"><span class="material-symbols-outlined" style="font-size:18px;">menu_book</span><strong id="lib-total">0</strong> Resources</div>
+            <div class="lib-stat"><span class="material-symbols-outlined" style="font-size:18px;">bookmark</span><strong id="lib-bookmarked">0</strong> Bookmarked</div>
+        </div>
+    </div>
+</section>
+
+<div class="library-tabs fade-up fade-up-d1">
+    <button class="lib-tab active" onclick="switchLibTab('all', this)">All Resources</button>
+    <button class="lib-tab" onclick="switchLibTab('bookmarks', this)">My Bookmarks</button>
+    <button class="lib-tab" onclick="switchLibTab('e-book', this)">E-Books</button>
+    <button class="lib-tab" onclick="switchLibTab('notes', this)">Lecture Notes</button>
+</div>
+
+<div class="books-grid fade-up fade-up-d2" id="books-grid">
+    <div class="stat-card skeleton skeleton-card" style="height:200px;"></div>
+    <div class="stat-card skeleton skeleton-card" style="height:200px;"></div>
+    <div class="stat-card skeleton skeleton-card" style="height:200px;"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allBooks = [];
+let currentLibTab = 'all';
+
+document.addEventListener('DOMContentLoaded', loadLibrary);
+
+async function loadLibrary() {
+    try {
+        const res = await api('GET', '/api/library/books');
+        if (res.ok) {
+            allBooks = res.data;
+            renderBooks();
+        } else { throw new Error("Failed"); }
+    } catch(e) {
+        document.getElementById('books-grid').innerHTML = '<div class="empty-state-box" style="grid-column:1/-1;"><span class="material-symbols-outlined">error</span><p>Failed to load library resources.</p></div>';
+    }
+}
+
+function switchLibTab(tab, btn) {
+    currentLibTab = tab;
+    document.querySelectorAll('.lib-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderBooks();
+}
+
+function filterBooks() { renderBooks(); }
+
+function renderBooks() {
+    const grid = document.getElementById('books-grid');
+    const search = (document.getElementById('lib-search-input').value || '').toLowerCase();
+    grid.innerHTML = '';
+
+    let booksToRender = allBooks;
+    if (currentLibTab === 'bookmarks') booksToRender = allBooks.filter(b => b.is_bookmarked);
+    else if (currentLibTab === 'e-book') booksToRender = allBooks.filter(b => b.category === 'e-book' || !b.category);
+    else if (currentLibTab === 'notes') booksToRender = allBooks.filter(b => b.category === 'notes');
+
+    if (search) {
+        booksToRender = booksToRender.filter(b =>
+            b.title.toLowerCase().includes(search) ||
+            (b.author || '').toLowerCase().includes(search) ||
+            b.subject.toLowerCase().includes(search)
+        );
+    }
+
+    document.getElementById('lib-total').textContent = allBooks.length;
+    document.getElementById('lib-bookmarked').textContent = allBooks.filter(b => b.is_bookmarked).length;
+
+    if (booksToRender.length === 0) {
+        grid.innerHTML = '<div class="empty-state-box" style="grid-column:1/-1;"><span class="material-symbols-outlined">library_books</span><p style="margin-top:12px;">No resources found</p></div>';
+        return;
+    }
+
+    booksToRender.forEach(book => {
+        const iconName = book.category === 'notes' ? 'description' : 'menu_book';
+        grid.innerHTML += `
+            <div class="book-card glow-hover scroll-reveal">
+                <button class="bookmark-btn ${book.is_bookmarked ? 'saved' : ''}" onclick="toggleBookmark(${book.id})" data-tooltip="${book.is_bookmarked ? 'Remove Bookmark' : 'Bookmark'}">
+                    <span class="material-symbols-outlined" style="font-size:18px;">${book.is_bookmarked ? 'bookmark' : 'bookmark_border'}</span>
+                </button>
+                <div class="book-icon"><span class="material-symbols-outlined" style="font-size:28px; color:var(--primary);">${iconName}</span></div>
+                <div class="book-title">${book.title}</div>
+                <div class="book-author">${book.author || 'Unknown Author'} • ${book.subject}</div>
+                <a href="/view-pdf/${book.id}" class="btn-gold" style="width:100%; justify-content:center; padding:10px; font-size:13px;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">auto_stories</span>Read Book
+                </a>
+            </div>
+        `;
+    });
+    initScrollReveal();
+}
+
+async function toggleBookmark(bookId) {
+    const res = await api('POST', `/api/library/books/${bookId}/bookmark`);
+    if (res.ok) {
+        const book = allBooks.find(b => b.id === bookId);
+        if (book) book.is_bookmarked = res.data.is_bookmarked;
+        renderBooks();
+        showToast(res.data.is_bookmarked ? 'Bookmarked!' : 'Bookmark removed', 'bookmark');
+    } else { showToast("Failed to bookmark", "error"); }
+}
+</script>
+{% endblock %}

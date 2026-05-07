@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule | Aethelgard BCA Portal{% endblock %}
+
+{% block head %}
+<style>
+  .day-strip { display:flex; gap:8px; background:var(--card); padding:8px; border:1px solid var(--border); border-radius:16px; margin-bottom:2rem; overflow-x:auto; }
+  .day-btn { flex:1; min-width:56px; padding:12px 8px; display:flex; flex-direction:column; align-items:center; gap:4px; border:none; background:transparent; color:var(--muted); cursor:pointer; border-radius:12px; transition:all 0.3s; font-family:'Inter',sans-serif; }
+  .day-btn:hover { background:var(--primary-dim); color:var(--primary); }
+  .day-btn.active { background:var(--surface); border:1px solid var(--primary); color:var(--primary); }
+  .day-btn .day-name { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:2px; }
+  .day-btn .day-num { font-size:18px; font-weight:700; }
+  .day-btn .day-dot { width:5px; height:5px; border-radius:50%; background:var(--primary); display:none; }
+  .day-btn.active .day-dot { display:block; }
+  .timeline { position:relative; }
+  .timeline::before { content:''; position:absolute; left:11px; top:0; bottom:0; width:2px; background:var(--border); }
+  .timeline-entry { position:relative; padding-left:40px; margin-bottom:20px; }
+  .timeline-dot { position:absolute; left:6px; top:20px; width:12px; height:12px; border-radius:50%; background:var(--primary); border:3px solid var(--bg); }
+  .schedule-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px 24px; transition:all 0.3s; }
+  .schedule-card:hover { border-color:var(--primary); }
+  .type-badge { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:2px; padding:4px 10px; border-radius:6px; display:inline-block; }
+  .type-lecture { background:var(--primary-dim); color:var(--primary); }
+  .type-lab { background:rgba(78,205,196,0.15); color:#4ecdc4; }
+  .type-seminar { background:rgba(175,201,234,0.15); color:#afc9ea; }
+  .type-tutorial { background:rgba(233,193,118,0.15); color:#e9c176; }
+  .note-card { margin-top:2rem; background:var(--surface); padding:24px; border-radius:16px; border-left:4px solid var(--primary); }
+  .empty-state { text-align:center; padding:3rem 1rem; color:var(--muted); }
+</style>
+{% endblock %}
+
+{% block nav_schedule %}active{% endblock %}
+{% block nav_mobile_schedule %}active{% endblock %}
+
+{% block content_area_style %}style="max-width:900px;"{% endblock %}
+
+{% block content %}
+    <section class="fade-up" style="margin-bottom:1.5rem;">
+      <h1 style="font-family:'Newsreader',serif; font-size:2rem; color:var(--primary); margin-bottom:4px;">Weekly Schedule</h1>
+      <p style="color:var(--muted); font-style:italic;">Semester VI • BCA • Academic Year 2024–25</p>
+    </section>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <button onclick="changeWeek(-1)" class="btn-outline" style="padding:6px 12px; font-size:13px;"><span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span>Prev</button>
+      <span id="week-label" style="font-size:14px; color:var(--muted); font-weight:600;"></span>
+      <button onclick="changeWeek(1)" class="btn-outline" style="padding:6px 12px; font-size:13px;">Next<span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span></button>
+    </div>
+
+    <div class="day-strip fade-up fade-up-d1" id="day-strip"></div>
+    <section class="timeline fade-up fade-up-d2" id="timeline-container"></section>
+    <div class="note-card fade-up fade-up-d3" id="daily-note" style="display:none;">
+      <h4 style="font-size:16px; font-weight:600; color:var(--primary); margin-bottom:6px;" id="note-title"></h4>
+      <p style="font-size:14px; color:var(--muted);" id="note-text"></p>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TIMETABLE = {
+  mon: [
+    { time:'09:00–10:30', title:'Database Management Systems', prof:'Prof. Rajan Mehta', room:'Computer Lab 3, Block B', type:'lecture' },
+    { time:'11:00–12:30', title:'Computer Networks', prof:'Dr. Sandeep Kumar', room:'Room 301, Block A', type:'lecture' },
+    { time:'14:00–16:00', title:'Web Technologies Lab', prof:'Dr. Priya Sharma', room:'Programming Lab 1, Block C', type:'lab' }
+  ],
+  tue: [
+    { time:'09:00–10:30', title:'Data Structures & Algorithms', prof:'Prof. Anil Verma', room:'Room 204, Block A', type:'lecture' },
+    { time:'11:00–12:00', title:'Software Engineering', prof:'Prof. Neha Gupta', room:'Room 105, Block B', type:'seminar' },
+    { time:'13:00–14:00', title:'DBMS Tutorial', prof:'Prof. Rajan Mehta', room:'Room 204, Block A', type:'tutorial' },
+    { time:'14:30–16:30', title:'Computer Networks Lab', prof:'Dr. Sandeep Kumar', room:'Network Lab, Block C', type:'lab' }
+  ],
+  wed: [
+    { time:'09:00–10:30', title:'Database Management Systems', prof:'Prof. Rajan Mehta', room:'Computer Lab 3, Block B', type:'lecture' },
+    { time:'11:30–13:00', title:'Web Technologies', prof:'Dr. Priya Sharma', room:'Seminar Hall A', type:'seminar' },
+    { time:'14:00–16:00', title:'DSA Lab', prof:'Prof. Anil Verma', room:'Programming Lab 2, Block C', type:'lab' }
+  ],
+  thu: [
+    { time:'09:00–10:30', title:'Software Engineering', prof:'Prof. Neha Gupta', room:'Room 105, Block B', type:'lecture' },
+    { time:'11:00–12:30', title:'Computer Networks', prof:'Dr. Sandeep Kumar', room:'Room 301, Block A', type:'lecture' },
+    { time:'14:00–15:00', title:'DSA Tutorial', prof:'Prof. Anil Verma', room:'Room 204, Block A', type:'tutorial' }
+  ],
+  fri: [
+    { time:'09:00–10:30', title:'Web Technologies', prof:'Dr. Priya Sharma', room:'Room 202, Block A', type:'lecture' },
+    { time:'11:00–12:00', title:'Project Guidance', prof:'Prof. Rajan Mehta', room:'Faculty Room, Block B', type:'seminar' },
+    { time:'13:00–15:00', title:'Software Engineering Lab', prof:'Prof. Neha Gupta', room:'Programming Lab 1, Block C', type:'lab' }
+  ]
+};
+const NOTES = {
+  mon:{title:"Today's Focus",text:'Prepare ER diagrams for Library Management mini project.'},
+  tue:{title:'Lab Reminder',text:'Complete linked-list implementation before DSA lab.'},
+  wed:{title:"Lab Task",text:'Implement BST with insert, delete, traversal in C++.'},
+  thu:{title:'Tutorial Prep',text:'Review Quick Sort & Merge Sort analysis.'},
+  fri:{title:'Week Review',text:'Submit weekly project progress report before 5 PM.'}
+};
+const DAY_KEYS = ['mon','tue','wed','thu','fri'];
+const DAY_NAMES = ['MON','TUE','WED','THU','FRI'];
+let currentWeekStart = getMonday(new Date());
+let selectedDay = null;
+
+function getMonday(d) {
+  d = new Date(d); const day = d.getDay();
+  d.setDate(d.getDate() - day + (day===0?-6:1)); d.setHours(0,0,0,0); return d;
+}
+function changeWeek(dir) {
+  currentWeekStart.setDate(currentWeekStart.getDate() + dir*7);
+  renderStrip(); renderSchedule(selectedDay || DAY_KEYS[0]);
+}
+function renderStrip() {
+  const strip = document.getElementById('day-strip');
+  strip.innerHTML = '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i=0; i<5; i++) {
+    const d = new Date(currentWeekStart); d.setDate(d.getDate()+i);
+    const isToday = d.getTime()===today.getTime();
+    const key = DAY_KEYS[i];
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + ((selectedDay?selectedDay===key:isToday)?' active':'');
+    btn.innerHTML = '<span class="day-name">'+DAY_NAMES[i]+'</span><span class="day-num">'+d.getDate()+'</span><div class="day-dot"></div>';
+    btn.onclick = function(){ selectedDay=key; renderStrip(); renderSchedule(key); };
+    strip.appendChild(btn);
+  }
+  const end = new Date(currentWeekStart); end.setDate(end.getDate()+4);
+  const opts={month:'short',day:'numeric'};
+  document.getElementById('week-label').textContent = currentWeekStart.toLocaleDateString('en-IN',opts)+' — '+end.toLocaleDateString('en-IN',opts)+', '+end.getFullYear();
+}
+function renderSchedule(dayKey) {
+  const container = document.getElementById('timeline-container');
+  const entries = TIMETABLE[dayKey] || [];
+  if (entries.length===0) { container.innerHTML='<div class="empty-state"><span class="material-symbols-outlined" style="font-size:64px;color:var(--primary);opacity:0.3;">event_busy</span><p style="margin-top:1rem;font-size:1.1rem;">No classes today. Enjoy!</p></div>'; document.getElementById('daily-note').style.display='none'; return; }
+  container.innerHTML = entries.map(function(e){
+    return '<div class="timeline-entry"><div class="timeline-dot"></div><div class="schedule-card"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;"><span class="type-badge type-'+e.type+'">'+e.type.toUpperCase()+'</span><span style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;">'+e.time+'</span></div><h3 style="font-family:Newsreader,serif;font-size:1.15rem;margin-bottom:4px;">'+e.title+'</h3><p style="font-size:13px;color:var(--muted);">'+e.prof+'</p><div style="display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"><span class="material-symbols-outlined" style="font-size:16px;color:var(--primary);">location_on</span><span style="font-size:13px;color:var(--muted);">'+e.room+'</span></div></div></div>';
+  }).join('');
+  const note = NOTES[dayKey];
+  if (note) { document.getElementById('daily-note').style.display='block'; document.getElementById('note-title').textContent=note.title; document.getElementById('note-text').textContent=note.text; }
+  else { document.getElementById('daily-note').style.display='none'; }
+}
+document.addEventListener('DOMContentLoaded', function() {
+  const todayIdx = new Date().getDay();
+  selectedDay = (todayIdx>=1&&todayIdx<=5) ? DAY_KEYS[todayIdx-1] : 'mon';
+  renderStrip(); renderSchedule(selectedDay);
+});
+</script>
+{% endblock %}

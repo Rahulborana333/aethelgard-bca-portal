@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications | Aethelgard BCA Portal{% endblock %}
+
+{% block head %}
+<style>
+  .notif-card { display:flex; gap:16px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:12px; transition:all 0.3s; cursor:pointer; }
+  .notif-card:hover { border-color:rgba(141,117,72,0.4); }
+  .notif-card.unread { border-left:3px solid var(--primary); }
+  .notif-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .notif-icon.gold { background:var(--primary-dim); color:var(--primary); }
+  .notif-icon.blue { background:rgba(175,201,234,0.15); color:#afc9ea; }
+  .notif-icon.red { background:rgba(255,107,107,0.15); color:#ff6b6b; }
+  .notif-icon.green { background:rgba(78,205,196,0.15); color:#4ecdc4; }
+  .notif-time { font-size:11px; color:var(--muted); margin-top:4px; }
+  .nf-btn { padding:8px 16px; border:1px solid var(--border); border-radius:99px; background:transparent; color:var(--muted); cursor:pointer; font-size:13px; font-weight:600; transition:all 0.3s; }
+  .nf-btn:hover { border-color:var(--primary); color:var(--primary); }
+  .nf-btn.active { background:var(--primary); color:var(--surface); border-color:var(--primary); }
+</style>
+{% endblock %}
+
+{% block nav_notif %}active{% endblock %}
+
+{% block content_area_style %}style="max-width:800px;"{% endblock %}
+
+{% block content %}
+    <section class="fade-up" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h1 style="font-family:'Newsreader',serif; font-size:2rem; color:var(--primary); margin-bottom:4px;">Notifications</h1>
+        <p style="color:var(--muted);" id="notif-count">Loading...</p>
+      </div>
+      <button class="btn-outline" onclick="markAllRead()"><span class="material-symbols-outlined" style="font-size:18px;">done_all</span>Mark All Read</button>
+    </section>
+
+    <div style="display:flex; gap:8px; margin-bottom:2rem; flex-wrap:wrap;" class="fade-up fade-up-d1">
+      <button class="nf-btn active" onclick="filterNotifs('all',this)">All</button>
+      <button class="nf-btn" onclick="filterNotifs('warning',this)">Deadlines</button>
+      <button class="nf-btn" onclick="filterNotifs('info',this)">Academic</button>
+      <button class="nf-btn" onclick="filterNotifs('success',this)">Success</button>
+      <button class="nf-btn" onclick="filterNotifs('danger',this)">Alerts</button>
+    </div>
+
+    <div id="notif-list" class="fade-up fade-up-d2">
+      <div style="text-align:center; padding:3rem; color:var(--muted);">
+        <span class="material-symbols-outlined" style="font-size:48px; opacity:0.3;">hourglass_top</span>
+        <p style="margin-top:12px;">Loading from database...</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allNotifs = [];
+let currentFilter = 'all';
+const TYPE_ICON = { info:'school', warning:'assignment_late', success:'check_circle', danger:'warning' };
+const TYPE_COLOR = { info:'blue', warning:'gold', success:'green', danger:'red' };
+
+async function loadNotifications() {
+  const r = await api('GET', '/api/notifications');
+  if (!r.ok) { window.location.href = '/login'; return; }
+  allNotifs = r.data;
+  renderNotifs();
+}
+
+function filterNotifs(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.nf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderNotifs();
+}
+
+function renderNotifs() {
+  const filtered = allNotifs.filter(n => currentFilter === 'all' || n.type === currentFilter);
+  const unread = allNotifs.filter(n => !n.read).length;
+  document.getElementById('notif-count').textContent = unread + ' unread notification' + (unread !== 1 ? 's' : '') + ' • Stored in SQLite';
+
+  if (filtered.length === 0) {
+    document.getElementById('notif-list').innerHTML = '<div style="text-align:center; padding:3rem; color:var(--muted);"><span class="material-symbols-outlined" style="font-size:48px; opacity:0.3; color:var(--primary);">notifications_off</span><p style="margin-top:12px;">No notifications found</p></div>';
+    return;
+  }
+
+  document.getElementById('notif-list').innerHTML = filtered.map(function(n) {
+    const icon = TYPE_ICON[n.type] || 'info';
+    const color = TYPE_COLOR[n.type] || 'blue';
+    return '<div class="notif-card' + (n.read ? '' : ' unread') + '" onclick="markRead(' + n.id + ')">' +
+      '<div class="notif-icon ' + color + '"><span class="material-symbols-outlined">' + icon + '</span></div>' +
+      '<div style="flex:1;"><strong style="font-size:15px;">' + n.title + '</strong>' +
+      '<p style="font-size:13px; color:var(--muted); margin-top:4px;">' + n.message + '</p>' +
+      '<div class="notif-time">' + n.created_at + '</div></div>' +
+      (!n.read ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:6px;"></div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+async function markRead(id) {
+  await api('POST', '/api/notifications/' + id + '/read');
+  const n = allNotifs.find(n => n.id === id);
+  if (n) n.read = true;
+  renderNotifs();
+}
+
+async function markAllRead() {
+  await api('POST', '/api/notifications/read-all');
+  allNotifs.forEach(n => n.read = true);
+  renderNotifs();
+  showToast('All notifications marked as read', 'done_all');
+}
+
+document.addEventListener('DOMContentLoaded', loadNotifications);
+</script>
+{% endblock %}

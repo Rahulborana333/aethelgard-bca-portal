@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Command Center | Aethelgard Portal</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --sidebar-width: 280px;
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+            background: var(--bg);
+        }
+
+        /* Sidebar Customization for Admin */
+        .admin-sidebar {
+            width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .admin-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            border: 1px solid transparent;
+            font-weight: 500;
+        }
+
+        .admin-nav-item:hover {
+            background: var(--primary-dim);
+            color: var(--primary);
+            border-color: var(--border);
+        }
+
+        .admin-nav-item.active {
+            background: var(--primary-dim);
+            color: var(--primary);
+            border-color: var(--border-bright);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
+        }
+
+        .admin-main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .metric-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--border-bright);
+            box-shadow: 0 10px 30px var(--shadow);
+        }
+
+        .metric-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--primary-dim);
+            color: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .metric-info h4 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .metric-info p {
+            font-family: 'Newsreader', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        /* Data Tables */
+        .table-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: rgba(212, 175, 55, 0.05);
+            text-align: left;
+            padding: 16px 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(212, 175, 55, 0.02); }
+
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--muted);
+        }
+
+        .btn-action:hover {
+            color: var(--error);
+            border-color: var(--error);
+            background: rgba(224, 108, 117, 0.1);
+        }
+
+        /* Search Bar */
+        .admin-search {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .admin-search input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-bright);
+            width: 100%;
+        }
+
+        /* Modal Customization */
+        .admin-modal .modal-box {
+            max-width: 600px;
+        }
+
+        /* Charts */
+        .chart-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        /* Admin Hamburger */
+        .admin-hamburger {
+            display: none; background: transparent; border: none; color: var(--text);
+            width: 40px; height: 40px; cursor: pointer; border-radius: 8px;
+            align-items: center; justify-content: center; transition: all 0.3s;
+        }
+        .admin-hamburger:hover { background: var(--primary-dim); color: var(--primary); }
+        .admin-mobile-bar {
+            display: none; background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 12px 20px; align-items: center; gap: 12px;
+        }
+        .admin-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px); z-index: 90;
+        }
+        .admin-overlay.active { display: block; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .admin-sidebar {
+                position: fixed; left: -300px; top: 0; z-index: 100;
+                width: 280px; transition: left 0.3s ease;
+                box-shadow: 4px 0 30px rgba(0,0,0,0.5);
+            }
+            .admin-sidebar.open { left: 0; }
+            .admin-mobile-bar { display: flex; }
+            .admin-hamburger { display: flex; }
+            .chart-row { grid-template-columns: 1fr; }
+            .metrics-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 480px) {
+            .metrics-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-overlay" id="adminOverlay"></div>
+    <div class="admin-layout">
+        <!-- Mobile Top Bar -->
+        <div class="admin-mobile-bar">
+            <button class="admin-hamburger" id="adminHamburger" onclick="toggleAdminSidebar()">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <span style="font-family:'Newsreader',serif; font-size:1.2rem; color:var(--primary); font-weight:700;">Admin Center</span>
+        </div>
+        <!-- Admin Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-logo" style="margin-bottom: 3rem;">
+                <div class="sidebar-logo-icon"><span class="material-symbols-outlined">admin_panel_settings</span></div>
+                <div><h1 style="font-size: 1.4rem;">Admin</h1><p style="font-size: 9px;">Command Center</p></div>
+            </div>
+
+            <nav class="admin-nav">
+                <div class="admin-nav-item active" data-tab="dashboard">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="admin-nav-item" data-tab="students">
+                    <span class="material-symbols-outlined">group</span>
+                    <span>Students</span>
+                </div>
+                <div class="admin-nav-item" data-tab="library">
+                    <span class="material-symbols-outlined">local_library</span>
+                    <span>Library</span>
+                </div>
+                <div class="admin-nav-item" data-tab="broadcast">
+                    <span class="material-symbols-outlined">campaign</span>
+                    <span>Broadcast</span>
+                </div>
+                <div class="admin-nav-item" data-tab="logs">
+                    <span class="material-symbols-outlined">history</span>
+                    <span>Audit Logs</span>
+                </div>
+                <div class="admin-nav-item" data-tab="settings">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>System Settings</span>
+                </div>
+            </nav>
+
+            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+                <a href="/" class="admin-nav-item" style="border-color: var(--border);">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    <span>Exit Admin</span>
+                </a>
+                <button onclick="logout()" class="sidebar-btn" style="width: 100%;"><span class="material-symbols-outlined" style="font-size: 18px; margin-right: 8px;">logout</span> Logout</button>
+            </div>
+        </aside>
+
+        <!-- Admin Main Content -->
+        <main class="admin-main">
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="section-title">
+                    <span class="material-symbols-outlined" style="color:var(--primary)">analytics</span>
+                    System Overview
+                </div>
+                
+                <div class="metrics-grid" id="metrics-container">
+                    <div class="metric-card fade-up">
+                        <div class="metric-icon"><span class="material-symbols-outlined">person</span></div>
+                        <div class="metric-info"><h4>Total Students</h4><p id="stat-students">0</p></div>
+                    </div>
+                    <div class="metric-card fade-up fade-up-d1">
+                        <div class="metric-icon" style="background:rgba(76,175,80,0.1); color:#4caf50; border-color:rgba(76,175,80,0.2);"><span class="material-symbols-outlined">check_circle</span></div>
+                        <div class="metric-info"><h4>Active</h4><p id="stat-active" style="color:#4caf50">0</p></div>
+                    </div>
+                    <div class="metric-card fade-up fade-up-d2">
+                        <div class="metric-icon" style="background:rgba(224,108,117,0.1); color:var(--error); border-color:rgba(224,108,117,0.2);"><span class="material-symbols-outlined">block</span></div>
+                        <div class="metric-info"><h4>Suspended</h4><p id="stat-suspended" style="color:var(--error)">0</p></div>
+                    </div>
+                    <div class="metric-card fade-up fade-up-d3">
+                        <div class="metric-icon"><span class="material-symbols-outlined">grade</span></div>
+                        <div class="metric-info"><h4>Avg CGPA</h4><p id="stat-cgpa">0.00</p></div>
+                    </div>
+                    <div class="metric-card fade-up">
+                        <div class="metric-icon"><span class="material-symbols-outlined">event_available</span></div>
+                        <div class="metric-info"><h4>Avg Attendance</h4><p id="stat-attendance">0%</p></div>
+                    </div>
+                    <div class="metric-card fade-up fade-up-d1">
+                        <div class="metric-icon"><span class="material-symbols-outlined">book</span></div>
+                        <div class="metric-info"><h4>Library Assets</h4><p id="stat-books">0</p></div>
+                    </div>
+                    <div class="metric-card fade-up fade-up-d2">
+                        <div class="metric-icon"><span class="material-symbols-outlined">task</span></div>
+                        <div class="metric-info"><h4>Tasks Created</h4><p id="stat-tasks">0</p></div>
+                    </div>
+                    <div class="metric-card fade-up fade-up-d3">
+                        <div class="metric-icon" style="background:rgba(212,175,55,0.1); color:var(--primary); border-color:rgba(212,175,55,0.2);"><span class="material-symbols-outlined">admin_panel_settings</span></div>
+                        <div class="metric-info"><h4>Admins</h4><p id="stat-admins">0</p></div>
+                    </div>
+                </div>
+
+                <div class="chart-row">
+                    <div class="chart-card fade-up-d4">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--text-bright);">Performance Distribution</h3>
+                        <canvas id="performanceChart" height="150"></canvas>
+                    </div>
+                    <div class="chart-card fade-up-d4">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--text-bright);">CGPA Distribution</h3>
+                        <canvas id="cgpaChart" height="180"></canvas>
+                    </div>
+                </div>
+                <div class="chart-row" style="margin-top:0;">
+                    <div class="chart-card">
+                        <h3 style="margin-bottom: 1.5rem; color: var(--text-bright);">Task Completion</h3>
+                        <canvas id="taskChart" height="150"></canvas>
+                    </div>
+                    <div class="chart-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        <span class="material-symbols-outlined" style="font-size: 64px; color: var(--primary); margin-bottom: 1rem;">verified_user</span>
+                        <h3 style="color:var(--text-bright)">System Status</h3>
+                        <p style="color:var(--success); font-weight: 600; margin-top: 0.5rem;">All Systems Operational</p>
+                        <p style="color:var(--muted); font-size: 0.8rem; margin-top: 1rem;">Version 2.4.0 (Enterprise)</p>
+                        <div style="display:flex;gap:1rem;margin-top:1.5rem;flex-wrap:wrap;justify-content:center;">
+                            <a href="/admin/api/export/students" class="btn-outline" style="font-size:12px;padding:8px 14px;"><span class="material-symbols-outlined" style="font-size:14px">download</span> Export CSV</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Students Tab -->
+            <section id="students" class="tab-content">
+                <div class="section-title">Student Directory</div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap:wrap; gap:12px;">
+                    <div class="admin-search">
+                        <span class="material-symbols-outlined">search</span>
+                        <input type="text" placeholder="Search by name, ID, or email..." id="studentSearch">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:1.5rem;">
+                        <p style="color: var(--muted); font-size: 0.9rem;" id="studentCount">Showing 0 students</p>
+                        <a href="/admin/api/export/students" class="btn-outline" style="font-size:12px;padding:8px 14px;"><span class="material-symbols-outlined" style="font-size:14px">download</span> Export</a>
+                    </div>
+                </div>
+
+                <div class="table-container table-responsive">
+                    <table id="studentsTable">
+                        <thead>
+                            <tr>
+                                <th>Name / ID</th>
+                                <th>Contact / Sem</th>
+                                <th>Academic Performance</th>
+                                <th>Status</th>
+                                <th>Joined</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Library Tab -->
+            <section id="library" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div class="section-title" style="margin-bottom: 0;">Library Management</div>
+                    <button class="btn-gold" onclick="openAddLibraryModal()"><span class="material-symbols-outlined">add</span> Add Resource</button>
+                </div>
+
+                <div class="table-container table-responsive">
+                    <table id="libraryTable">
+                        <thead>
+                            <tr>
+                                <th>Title / Subject</th>
+                                <th>Resource Type</th>
+                                <th>Author / Category</th>
+                                <th>Added Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Broadcast Tab -->
+            <section id="broadcast" class="tab-content">
+                <div class="section-title">Broadcast Center</div>
+                <div class="grid-12">
+                    <div class="glass-card" style="padding: 2.5rem;">
+                        <h3 style="color: var(--text-bright); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                            <span class="material-symbols-outlined" style="color:var(--primary)">send</span>
+                            Global Announcement
+                        </h3>
+                        <form id="broadcastForm">
+                            <div class="form-group">
+                                <label class="form-label">Notification Title</label>
+                                <input type="text" id="notifTitle" class="form-input" placeholder="e.g. End Term Practical Schedule" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Message Content</label>
+                                <textarea id="notifMessage" class="form-input" rows="5" placeholder="Enter the detailed announcement here..." required style="resize: none;"></textarea>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label class="form-label">Urgency Level</label>
+                                    <select id="notifType" class="form-input">
+                                        <option value="info">Information (Gold)</option>
+                                        <option value="warning">Important Alert (Amber)</option>
+                                        <option value="danger">Critical Warning (Red)</option>
+                                        <option value="success">Achievement (Green)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="display: flex; align-items: flex-end;">
+                                    <button type="submit" class="btn-primary" style="width: 100%; height: 50px;">
+                                        <span class="material-symbols-outlined">broadcast_on_home</span>
+                                        Broadcast to All
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="glass-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <h4 style="color:var(--text-bright)">Recent Broadcasts</h4>
+                        <div id="recentBroadcasts" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <p style="color:var(--muted); font-size: 0.9rem;">Broadcast history will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Logs Tab -->
+            <section id="logs" class="tab-content">
+                <div class="section-title">Audit History</div>
+                <p style="color:var(--muted); margin-bottom: 1.5rem;">Recent administrative actions recorded on the platform.</p>
+                <div class="table-container table-responsive">
+                    <table id="logsTable">
+                        <thead>
+                            <tr>
+                                <th>Admin Name</th>
+                                <th>Action Performed</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section id="settings" class="tab-content">
+                <div class="section-title">Portal Configuration</div>
+                <div class="glass-card" style="padding: 2.5rem; max-width: 800px;">
+                    <form id="settingsForm">
+                        <div class="form-group">
+                            <label class="form-label">Maintenance Mode</label>
+                            <select id="setting-maintenance" class="form-input">
+                                <option value="off">Disabled (Normal Operation)</option>
+                                <option value="on">Enabled (Admins Only)</option>
+                            </select>
+                            <p style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">When enabled, students will see a maintenance screen.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Global Banner Message</label>
+                            <input type="text" id="setting-banner" class="form-input" placeholder="e.g. Portal maintenance tonight at 10 PM">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Registration Status</label>
+                            <select id="setting-registration" class="form-input">
+                                <option value="open">Open (Anyone can signup)</option>
+                                <option value="closed">Closed (Manual addition only)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary" style="margin-top: 1rem;">
+                            <span class="material-symbols-outlined">save</span>
+                            Apply Global Settings
+                        </button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Add Library Modal -->
+    <div class="modal-overlay" id="libraryModal">
+        <div class="modal-box admin-modal">
+            <h2 id="modalTitle">Add New Resource</h2>
+            <form id="libraryForm">
+                <div class="form-group">
+                    <label class="form-label">Resource Type</label>
+                    <select id="libType" class="form-input" onchange="toggleLibFields()">
+                        <option value="ebook">E-Book / Digital Note</option>
+                        <option value="paper">Sample Paper / Important Qs</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="libTitle" class="form-input" placeholder="Resource Title" required>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Subject</label>
+                        <input type="text" id="libSubject" class="form-input" placeholder="e.g. DBMS" required>
+                    </div>
+                    <div class="form-group" id="fieldAuthor">
+                        <label class="form-label">Author</label>
+                        <input type="text" id="libAuthor" class="form-input" placeholder="Author Name">
+                    </div>
+                    <div class="form-group" id="fieldPaperType" style="display:none;">
+                        <label class="form-label">Paper Category</label>
+                        <select id="libPaperType" class="form-input">
+                            <option value="paper">Sample Paper</option>
+                            <option value="important_qs">Important Questions</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">File Path (URL)</label>
+                    <input type="text" id="libFilePath" class="form-input" placeholder="e.g. /static/pdfs/dbms.pdf" required>
+                </div>
+                <div class="form-group" id="fieldCover">
+                    <label class="form-label">Cover Image (URL)</label>
+                    <input type="text" id="libCover" class="form-input" placeholder="e.g. /static/images/dbms_cover.jpg">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                    <button type="submit" class="btn-primary" style="flex: 1;">Save Resource</button>
+                    <button type="button" class="btn-outline" onclick="closeModal()" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Direct Message Modal -->
+    <div class="modal-overlay" id="messageModal">
+        <div class="modal-box admin-modal">
+            <h2 style="display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined" style="color:var(--primary)">send</span>
+                Send Message
+            </h2>
+            <p id="messageTarget" style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;"></p>
+            <form id="messageForm">
+                <input type="hidden" id="messageStudentId">
+                <div class="form-group">
+                    <label class="form-label">Subject / Title</label>
+                    <input type="text" id="msgTitle" class="form-input" placeholder="e.g. Assignment Reminder" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Message</label>
+                    <textarea id="msgBody" class="form-input" rows="4" placeholder="Type your message here..." required style="resize:none;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Urgency</label>
+                    <select id="msgType" class="form-input">
+                        <option value="info">ℹ️ Information</option>
+                        <option value="warning">⚠️ Warning</option>
+                        <option value="danger">🚨 Critical</option>
+                        <option value="success">✅ Positive</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:1rem;">
+                    <button type="submit" class="btn-primary" style="flex:1;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">send</span> Send
+                    </button>
+                    <button type="button" class="btn-outline" onclick="closeMessageModal()" style="flex:1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Student Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-box admin-modal" style="max-width:750px;max-height:90vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+                <h2 style="display:flex;align-items:center;gap:10px;margin:0;">
+                    <span class="material-symbols-outlined" style="color:var(--primary)">account_circle</span>
+                    Student Profile
+                </h2>
+                <button onclick="closeProfileModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;font-family:'Material Symbols Outlined';">close</button>
+            </div>
+            <div id="profileContent">
+                <div style="text-align:center;padding:2rem;color:var(--muted);">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadStudents();
+            loadLibrary();
+            initTabs();
+
+            // Broadcast Form
+            document.getElementById('broadcastForm').addEventListener('submit', handleBroadcast);
+            
+            // Library Form
+            document.getElementById('libraryForm').addEventListener('submit', handleAddLibrary);
+
+            // Settings Form
+            document.getElementById('settingsForm').addEventListener('submit', handleSettings);
+
+            // Student Search
+            document.getElementById('studentSearch').addEventListener('input', (e) => {
+                filterTable('studentsTable', e.target.value);
+            });
+
+            // Direct Message Form
+            document.getElementById('messageForm').addEventListener('submit', handleSendMessage);
+        });
+
+        function initTabs() {
+            document.querySelectorAll('.admin-nav-item[data-tab]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.dataset.tab;
+                    document.querySelectorAll('.admin-nav-item').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    btn.classList.add('active');
+                    document.getElementById(tab).classList.add('active');
+                    
+                    // Reload data if needed
+                    if(tab === 'dashboard') loadStats();
+                    if(tab === 'students') loadStudents();
+                    if(tab === 'library') loadLibrary();
+                    if(tab === 'logs') loadLogs();
+                    if(tab === 'settings') loadSettings();
+                });
+            });
+        }
+
+        async function loadStats() {
+            const r = await api('GET', '/admin/api/stats');
+            if(r.ok) {
+                animateCounter(document.getElementById('stat-students'), r.data.total_students);
+                animateCounter(document.getElementById('stat-active'), r.data.active_students);
+                animateCounter(document.getElementById('stat-suspended'), r.data.suspended_students);
+                animateCounter(document.getElementById('stat-cgpa'), r.data.avg_cgpa);
+                document.getElementById('stat-attendance').textContent = r.data.avg_attendance + '%';
+                animateCounter(document.getElementById('stat-books'), r.data.total_books);
+                animateCounter(document.getElementById('stat-tasks'), r.data.total_tasks);
+                animateCounter(document.getElementById('stat-admins'), r.data.total_admins);
+                window._adminStats = r.data;
+                initCharts();
+            }
+        }
+
+        async function loadStudents() {
+            const r = await api('GET', '/admin/api/students');
+            const tbody = document.querySelector('#studentsTable tbody');
+            tbody.innerHTML = '';
+            if(r.ok) {
+                document.getElementById('studentCount').textContent = `Showing ${r.data.length} students`;
+                r.data.forEach(s => {
+                    const isActive = s.is_active !== false;
+                    const statusBadge = isActive
+                        ? '<span class="badge badge-success" style="font-size:11px;">Active</span>'
+                        : '<span class="badge badge-danger" style="font-size:11px;">Suspended</span>';
+                    const toggleIcon = isActive ? 'block' : 'check_circle';
+                    const toggleTitle = isActive ? 'Suspend Access' : 'Restore Access';
+                    const toggleColor = isActive ? 'color:var(--error);border-color:var(--error);' : 'color:#4caf50;border-color:#4caf50;';
+                    tbody.innerHTML += `
+                        <tr style="${!isActive ? 'opacity:0.6;' : ''}">
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div style="width:32px; height:32px; border-radius:50%; background:var(--primary-dim); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">${s.name.charAt(0)}</div>
+                                    <div>
+                                        <div style="color:var(--text-bright); font-weight:600;">${s.name}</div>
+                                        <div style="font-size:0.8rem; color:var(--muted)">${s.student_id}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="font-size:0.85rem;">${s.email}</div>
+                                <div style="font-size:0.75rem; color:var(--muted)">Semester ${s.semester} | ${s.branch}</div>
+                            </td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:15px;">
+                                    <div style="flex:1;">
+                                        <div style="font-size:0.85rem; font-weight:600; color:var(--primary)">${s.cgpa} CGPA</div>
+                                        <div class="progress-bar" style="height:4px; width:80px;"><div class="progress-bar-fill" style="width:${(s.cgpa/4)*100}%"></div></div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-bright)">${s.attendance}%</div>
+                                        <div style="font-size:0.7rem; color:var(--muted)">Attendance</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${statusBadge}</td>
+                            <td style="font-size:0.8rem;">${s.created_at}</td>
+                            <td>
+                                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                    <div class="btn-action" onclick="viewStudentProfile(${s.id})" title="View Full Profile" style="color:var(--primary);border-color:var(--primary);">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">person_search</span>
+                                    </div>
+                                    <div class="btn-action" onclick="openMessageModal(${s.id}, '${s.name}')" title="Send Direct Message" style="color:#61afef;border-color:#61afef;">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">mail</span>
+                                    </div>
+                                    <div class="btn-action" onclick="toggleAccess(${s.id}, '${s.name}')" title="${toggleTitle}" style="${toggleColor}">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">${toggleIcon}</span>
+                                    </div>
+                                    <div class="btn-action" onclick="promoteStudent(${s.id}, '${s.name}')" title="Promote to Admin">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">admin_panel_settings</span>
+                                    </div>
+                                    <div class="btn-action" onclick="deleteStudent(${s.id}, '${s.name}')" title="Delete Student">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        // ── Direct Message Modal ─────────────────────────────
+        function openMessageModal(studentId, studentName) {
+            document.getElementById('messageStudentId').value = studentId;
+            document.getElementById('messageTarget').textContent = `Sending to: ${studentName}`;
+            document.getElementById('msgTitle').value = '';
+            document.getElementById('msgBody').value = '';
+            document.getElementById('msgType').value = 'info';
+            document.getElementById('messageModal').classList.add('active');
+        }
+
+        function closeMessageModal() {
+            document.getElementById('messageModal').classList.remove('active');
+        }
+
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            const sid = document.getElementById('messageStudentId').value;
+            const payload = {
+                title: document.getElementById('msgTitle').value,
+                message: document.getElementById('msgBody').value,
+                type: document.getElementById('msgType').value
+            };
+            const r = await api('POST', `/admin/api/students/${sid}/message`, payload);
+            btn.disabled = false;
+            if(r.ok) {
+                showToast(`Message sent to ${r.data.student_name}!`, 'send');
+                closeMessageModal();
+                e.target.reset();
+            } else {
+                showToast(r.data.error || 'Failed to send message.', 'error');
+            }
+        }
+
+        // ── Student Profile Modal ────────────────────────────
+        async function viewStudentProfile(sid) {
+            document.getElementById('profileContent').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);"><span class="material-symbols-outlined" style="font-size:48px;animation:spin 1s linear infinite;">progress_activity</span><p>Loading profile...</p></div>';
+            document.getElementById('profileModal').classList.add('active');
+
+            const r = await api('GET', `/admin/api/students/${sid}/profile`);
+            if(!r.ok) {
+                document.getElementById('profileContent').innerHTML = '<p style="color:var(--error);text-align:center;">Failed to load profile.</p>';
+                return;
+            }
+            const { student: s, tasks, task_stats, notifications, bookmarks_count } = r.data;
+            const isActive = s.is_active !== false;
+
+            const taskRows = tasks.slice(0, 5).map(t => `
+                <tr>
+                    <td style="font-size:0.82rem;color:var(--text-bright);">${t.title}</td>
+                    <td><span class="badge badge-${t.priority === 'high' ? 'danger' : t.priority === 'medium' ? 'warning' : 'info'}" style="font-size:10px;">${t.priority}</span></td>
+                    <td style="font-size:0.75rem;color:var(--muted);">${new Date(t.due).toLocaleDateString()}</td>
+                    <td><span class="badge ${t.done ? 'badge-success' : 'badge-warning'}" style="font-size:10px;">${t.done ? 'Done' : 'Pending'}</span></td>
+                </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);font-size:0.85rem;">No tasks</td></tr>';
+
+            const notifRows = notifications.slice(0, 5).map(n => `
+                <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+                    <div style="font-size:0.85rem;font-weight:600;color:var(--text-bright);">${n.title}</div>
+                    <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">${n.message.substring(0,80)}${n.message.length>80?'...':''}</div>
+                    <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">${n.created_at}</div>
+                </div>`).join('') || '<p style="color:var(--muted);font-size:0.85rem;">No notifications</p>';
+
+            document.getElementById('profileContent').innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem;">
+                        <div style="display:flex;align-items:center;gap:14px;margin-bottom:1.5rem;">
+                            <div style="width:56px;height:56px;border-radius:50%;background:var(--primary-dim);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;border:2px solid var(--border-bright);">${s.name.charAt(0)}</div>
+                            <div>
+                                <div style="font-weight:700;font-size:1.1rem;color:var(--text-bright);">${s.name}</div>
+                                <div style="font-size:0.8rem;color:var(--muted);">${s.student_id}</div>
+                                <span class="badge ${isActive ? 'badge-success' : 'badge-danger'}" style="font-size:10px;margin-top:4px;">${isActive ? 'Active' : 'Suspended'}</span>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.82rem;">
+                            <div><span style="color:var(--muted);">Email</span><br><strong style="color:var(--text-bright);">${s.email}</strong></div>
+                            <div><span style="color:var(--muted);">Branch</span><br><strong style="color:var(--text-bright);">${s.branch}</strong></div>
+                            <div><span style="color:var(--muted);">Semester</span><br><strong style="color:var(--text-bright);">${s.semester}</strong></div>
+                            <div><span style="color:var(--muted);">Role</span><br><strong style="color:var(--primary);text-transform:capitalize;">${s.role}</strong></div>
+                            <div><span style="color:var(--muted);">Joined</span><br><strong style="color:var(--text-bright);">${s.created_at}</strong></div>
+                            <div><span style="color:var(--muted);">Rank</span><br><strong style="color:var(--primary);">🏆 #${s.rank}</strong></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;display:flex;align-items:center;gap:12px;">
+                            <span class="material-symbols-outlined" style="color:var(--primary);font-size:28px;">grade</span>
+                            <div><div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">CGPA</div><div style="font-size:1.4rem;font-weight:700;color:var(--primary);">${s.cgpa}</div></div>
+                        </div>
+                        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;display:flex;align-items:center;gap:12px;">
+                            <span class="material-symbols-outlined" style="color:#4caf50;font-size:28px;">event_available</span>
+                            <div><div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Attendance</div><div style="font-size:1.4rem;font-weight:700;color:#4caf50;">${s.attendance}%</div></div>
+                        </div>
+                        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem;display:flex;justify-content:space-around;">
+                            <div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:var(--text-bright);">${task_stats.total}</div><div style="font-size:0.7rem;color:var(--muted);">Tasks</div></div>
+                            <div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:#4caf50;">${task_stats.completed}</div><div style="font-size:0.7rem;color:var(--muted);">Done</div></div>
+                            <div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:var(--primary);">${task_stats.pending}</div><div style="font-size:0.7rem;color:var(--muted);">Pending</div></div>
+                            <div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:#61afef;">${bookmarks_count}</div><div style="font-size:0.7rem;color:var(--muted);">Bookmarks</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:3fr 2fr;gap:1.5rem;">
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+                        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;color:var(--text-bright);display:flex;align-items:center;gap:8px;">
+                            <span class="material-symbols-outlined" style="font-size:18px;color:var(--primary);">task</span> Recent Tasks
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead><tr>
+                                <th style="padding:10px 14px;font-size:0.7rem;text-transform:uppercase;color:var(--primary);text-align:left;">Title</th>
+                                <th style="padding:10px 8px;font-size:0.7rem;text-transform:uppercase;color:var(--primary);">Priority</th>
+                                <th style="padding:10px 8px;font-size:0.7rem;text-transform:uppercase;color:var(--primary);">Due</th>
+                                <th style="padding:10px 8px;font-size:0.7rem;text-transform:uppercase;color:var(--primary);">Status</th>
+                            </tr></thead>
+                            <tbody>${taskRows}</tbody>
+                        </table>
+                    </div>
+                    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+                        <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;color:var(--text-bright);display:flex;align-items:center;gap:8px;">
+                            <span class="material-symbols-outlined" style="font-size:18px;color:var(--primary);">notifications</span> Recent Notifications
+                        </div>
+                        <div style="padding:12px 16px;">${notifRows}</div>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:10px;margin-top:1.5rem;">
+                    <button class="btn-primary" onclick="openMessageModal(${s.id}, '${s.name}'); closeProfileModal();" style="flex:1;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">send</span> Send Message
+                    </button>
+                    <button class="btn-outline" onclick="closeProfileModal()" style="flex:1;">Close</button>
+                </div>
+            `;
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        async function toggleAccess(id, name) {
+            const msg = `Toggle access for "${name}"? This will suspend or restore their portal access.`;
+            if(!confirm(msg)) return;
+            const r = await api('POST', `/admin/api/students/${id}/toggle-access`);
+            if(r.ok) {
+                showToast(`${r.data.action} access for ${name}`, r.data.is_active ? 'check_circle' : 'block');
+                loadStudents();
+                loadStats();
+            } else {
+                showToast(r.data.error || 'Action failed', 'error');
+            }
+        }
+
+        async function promoteStudent(id, name) {
+            if(!confirm(`Promote "${name}" to Faculty Admin? They will have full access to this dashboard.`)) return;
+            const r = await api('POST', `/admin/api/students/${id}/promote`);
+            if(r.ok) {
+                showToast(`Student ${name} promoted to Admin!`, 'verified_user');
+                loadStudents();
+                loadStats();
+            }
+        }
+
+        async function loadLogs() {
+            const r = await api('GET', '/admin/api/logs');
+            const tbody = document.querySelector('#logsTable tbody');
+            tbody.innerHTML = '';
+            if(r.ok) {
+                r.data.forEach(l => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight:600; color:var(--text-bright)">${l.admin_name}</td>
+                            <td>${l.action}</td>
+                            <td style="font-size:0.8rem; color:var(--muted)">${l.timestamp}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        async function loadSettings() {
+            const r = await api('GET', '/admin/api/settings');
+            if(r.ok) {
+                if(r.data.maintenance) document.getElementById('setting-maintenance').value = r.data.maintenance;
+                if(r.data.banner) document.getElementById('setting-banner').value = r.data.banner;
+                if(r.data.registration) document.getElementById('setting-registration').value = r.data.registration;
+            }
+        }
+
+        async function handleSettings(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            const payload = {
+                maintenance: document.getElementById('setting-maintenance').value,
+                banner: document.getElementById('setting-banner').value,
+                registration: document.getElementById('setting-registration').value
+            };
+            const r = await api('POST', '/admin/api/settings', payload);
+            btn.disabled = false;
+            if(r.ok) showToast('System settings applied!', 'settings');
+        }
+
+        async function deleteStudent(id, name) {
+            if(!confirm(`Are you sure you want to delete student "${name}"? This action is irreversible.`)) return;
+            const r = await api('DELETE', `/admin/api/students/${id}`);
+            if(r.ok) {
+                showToast(`Student ${name} deleted successfully.`, 'check_circle');
+                loadStudents();
+                loadStats();
+            } else {
+                showToast(r.data.error || 'Error deleting student.', 'error');
+            }
+        }
+
+        async function loadLibrary() {
+            const r = await api('GET', '/admin/api/library');
+            const tbody = document.querySelector('#libraryTable tbody');
+            tbody.innerHTML = '';
+            if(r.ok) {
+                r.data.forEach(item => {
+                    const typeBadge = item.resource_type === 'ebook' ? '<span class="badge badge-info">E-Book</span>' : '<span class="badge badge-warning">Paper</span>';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>
+                                <div style="color:var(--text-bright); font-weight:600;">${item.title}</div>
+                                <div style="font-size:0.8rem; color:var(--muted)">${item.subject}</div>
+                            </td>
+                            <td>${typeBadge}</td>
+                            <td>
+                                <div style="font-size:0.85rem;">${item.author || item.type || '-'}</div>
+                                <div style="font-size:0.75rem; color:var(--muted)">${item.category || ''}</div>
+                            </td>
+                            <td style="font-size:0.8rem;">${new Date(item.created_at).toLocaleDateString()}</td>
+                            <td>
+                                <div style="display:flex; gap:8px;">
+                                    <a href="${item.resource_type === 'ebook' ? '/view-pdf/' + item.id : item.file_path}" target="${item.resource_type === 'ebook' ? '_self' : '_blank'}" class="btn-action" title="View" style="color:var(--primary); border-color:var(--primary);"><span class="material-symbols-outlined" style="font-size:18px;">visibility</span></a>
+                                    <div class="btn-action" onclick="deleteLibrary('${item.resource_type}', ${item.id}, '${item.title}')" title="Delete"><span class="material-symbols-outlined" style="font-size:18px;">delete</span></div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        async function deleteLibrary(type, id, title) {
+            if(!confirm(`Delete resource "${title}"?`)) return;
+            const r = await api('DELETE', `/admin/api/library/${type}/${id}`);
+            if(r.ok) {
+                showToast('Resource removed.', 'check_circle');
+                loadLibrary();
+                loadStats();
+            }
+        }
+
+        function openAddLibraryModal() {
+            document.getElementById('libraryModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('libraryModal').classList.remove('active');
+        }
+
+        function toggleLibFields() {
+            const type = document.getElementById('libType').value;
+            const fieldAuthor = document.getElementById('fieldAuthor');
+            const fieldCover = document.getElementById('fieldCover');
+            const fieldPaperType = document.getElementById('fieldPaperType');
+            
+            if(type === 'ebook') {
+                fieldAuthor.style.display = 'block';
+                fieldCover.style.display = 'block';
+                fieldPaperType.style.display = 'none';
+            } else {
+                fieldAuthor.style.display = 'none';
+                fieldCover.style.display = 'none';
+                fieldPaperType.style.display = 'block';
+            }
+        }
+
+        async function handleAddLibrary(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            
+            const payload = {
+                type: document.getElementById('libType').value,
+                title: document.getElementById('libTitle').value,
+                subject: document.getElementById('libSubject').value,
+                author: document.getElementById('libAuthor').value,
+                file_path: document.getElementById('libFilePath').value,
+                cover_image: document.getElementById('libCover').value,
+                paper_type: document.getElementById('libPaperType').value
+            };
+            
+            const r = await api('POST', '/admin/api/library', payload);
+            btn.disabled = false;
+            if(r.ok) {
+                showToast('Resource added successfully!', 'check_circle');
+                closeModal();
+                e.target.reset();
+                loadLibrary();
+                loadStats();
+            } else {
+                showToast(r.data.error || 'Error adding resource.', 'error');
+            }
+        }
+
+        async function handleBroadcast(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Broadcasting...';
+
+            const payload = {
+                title: document.getElementById('notifTitle').value,
+                message: document.getElementById('notifMessage').value,
+                type: document.getElementById('notifType').value
+            };
+
+            const r = await api('POST', '/admin/api/broadcast', payload);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+
+            if(r.ok) {
+                showToast(`Broadcast sent to ${r.data.count} students!`, 'campaign');
+                e.target.reset();
+                
+                // Add to recent list
+                const history = document.getElementById('recentBroadcasts');
+                if(history.querySelector('p')) history.innerHTML = '';
+                const div = document.createElement('div');
+                div.className = 'glass-card';
+                div.style.padding = '10px';
+                div.style.fontSize = '0.85rem';
+                div.innerHTML = `
+                    <div style="font-weight:600; color:var(--text-bright)">${payload.title}</div>
+                    <div style="color:var(--muted)">Sent just now</div>
+                `;
+                history.prepend(div);
+            } else {
+                showToast('Broadcast failed.', 'error');
+            }
+        }
+
+        function filterTable(tableId, query) {
+            query = query.toLowerCase();
+            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        let chartInstances = {};
+        function initCharts() {
+            const s = window._adminStats || {};
+            // Destroy old chart instances
+            Object.values(chartInstances).forEach(c => { if(c) c.destroy(); });
+
+            // Bar chart - Performance
+            const ctx1 = document.getElementById('performanceChart').getContext('2d');
+            chartInstances.perf = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
+                    datasets: [{
+                        label: 'Avg CGPA',
+                        data: [3.4, 3.6, 3.5, 3.7, 3.8, s.avg_cgpa || 3.9],
+                        backgroundColor: 'rgba(212, 175, 55, 0.6)',
+                        borderColor: '#d4af37', borderWidth: 1, borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 4.0, grid: { color: 'rgba(212,175,55,0.05)' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Doughnut - CGPA Distribution
+            const ctx2 = document.getElementById('cgpaChart').getContext('2d');
+            const cd = s.cgpa_dist || {high:1, mid:0, low:0};
+            chartInstances.cgpa = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High (≥3.5)', 'Mid (2.5-3.5)', 'Low (<2.5)'],
+                    datasets: [{
+                        data: [cd.high, cd.mid, cd.low],
+                        backgroundColor: ['#4caf50', '#d4af37', '#e06c75'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#999', padding: 15 } } }
+                }
+            });
+
+            // Doughnut - Task Completion
+            const ctx3 = document.getElementById('taskChart').getContext('2d');
+            chartInstances.task = new Chart(ctx3, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Pending'],
+                    datasets: [{
+                        data: [s.completed_tasks || 0, s.pending_tasks || 0],
+                        backgroundColor: ['#4caf50', 'rgba(212,175,55,0.5)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#999', padding: 15 } } }
+                }
+            });
+        }
+
+        // Admin Sidebar Toggle (Mobile)
+        function toggleAdminSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('adminOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+        document.getElementById('adminOverlay')?.addEventListener('click', function() {
+            document.getElementById('adminSidebar').classList.remove('open');
+            this.classList.remove('active');
+        });
+        // Auto-close sidebar on nav click (mobile)
+        document.querySelectorAll('.admin-nav-item[data-tab]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (window.innerWidth <= 1024) {
+                    document.getElementById('adminSidebar').classList.remove('open');
+                    document.getElementById('adminOverlay').classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

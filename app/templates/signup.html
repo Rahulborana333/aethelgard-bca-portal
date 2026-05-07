@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Create Account | Aethelgard BCA Portal</title>
+<meta name="description" content="Register for Aethelgard BCA Student Portal"/>
+<link rel="stylesheet" href="/static/styles.css"/>
+<style>
+  .signup-bg { background: var(--bg); position:relative; overflow:hidden; }
+  .signup-card { background:var(--card); border:1px solid var(--border); border-radius:24px; padding:2.5rem; position:relative; overflow:hidden; max-width:500px; width:100%; box-shadow: 0 10px 40px var(--shadow); }
+  .signup-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--primary),var(--secondary)); }
+  .form-error-global { color:var(--error); font-size:13px; background:#fee2e2; border:1px solid #f87171; border-radius:8px; padding:10px 14px; margin-bottom:1rem; display:none; }
+  .form-error-global.show { display:block; }
+  @keyframes slideUp { from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);} }
+  .slide-up { animation: slideUp 0.7s ease forwards; }
+  .password-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:20px; font-family:'Material Symbols Outlined'; transition:color 0.3s; }
+  .password-toggle:hover { color:var(--primary); }
+</style>
+</head>
+<body style="display:flex; flex-direction:column; min-height:100vh;">
+
+<header style="background:var(--surface); display:flex; justify-content:space-between; align-items:center; padding:0 2rem; height:70px; border-bottom:1px solid var(--border); position:relative; z-index:40;">
+  <div style="font-family:'Newsreader',serif; font-size:1.6rem; color:var(--text-bright); font-weight:700;">Aethelgard</div>
+  <a href="/login" class="btn-outline" style="font-family:'Inter',sans-serif; font-size:14px; text-decoration:none;">Already have an account?</a>
+</header>
+
+<main class="signup-bg" style="flex:1; display:flex; align-items:center; justify-content:center; padding:2rem; position:relative; z-index:1;">
+  <div class="signup-card slide-up" style="z-index:10;">
+    <div style="text-align:center; margin-bottom:2rem;">
+      <span class="material-symbols-outlined" style="font-size:48px; color:var(--primary);">person_add</span>
+      <h1 style="font-family:'Newsreader',serif; font-size:1.8rem; color:var(--text-bright); font-style:italic; margin-top:8px;">Create Account</h1>
+      <p style="font-size:12px; color:var(--primary); text-transform:uppercase; letter-spacing:2px; margin-top:4px; font-weight:600;">Student Registration</p>
+    </div>
+
+    <div id="global-error" class="form-error-global"></div>
+
+    <form id="signup-form" onsubmit="return handleSignup(event)">
+      <div class="grid-2" style="gap:12px;">
+        <div class="form-group">
+          <label class="form-label" for="name">Full Name</label>
+          <div class="form-input-icon">
+            <span class="material-symbols-outlined">person</span>
+            <input class="form-input" id="name" type="text" placeholder="Rahul Sharma" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="student-id">Student ID</label>
+          <div class="form-input-icon">
+            <span class="material-symbols-outlined">badge</span>
+            <input class="form-input" id="student-id" type="text" placeholder="BCA2025001" required/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">College Email</label>
+        <div class="form-input-icon">
+          <span class="material-symbols-outlined">mail</span>
+          <input class="form-input" id="email" type="email" placeholder="rahul@aethelgard.edu" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="form-input-icon" style="position:relative;">
+          <span class="material-symbols-outlined">lock</span>
+          <input class="form-input" id="password" type="password" placeholder="Min 6 characters" required/>
+          <button type="button" class="password-toggle material-symbols-outlined" onclick="togglePass()">visibility_off</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="semester">Current Semester</label>
+        <select class="form-input" id="semester">
+          <option value="1">Semester 1</option>
+          <option value="2">Semester 2</option>
+          <option value="3">Semester 3</option>
+          <option value="4">Semester 4</option>
+          <option value="5">Semester 5</option>
+          <option value="6" selected>Semester 6</option>
+        </select>
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:1.1rem; margin-top:8px;">
+        <span class="material-symbols-outlined" style="font-size:20px;">how_to_reg</span> Create Account
+      </button>
+    </form>
+
+    <div style="text-align:center; margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+      <p style="font-size:14px; color:var(--muted);">Already a member? <a href="/login" style="color:var(--primary); font-weight:600; text-decoration:none;">Sign In</a></p>
+    </div>
+  </div>
+</main>
+
+<div id="global-toast" class="toast"></div>
+<script src="/static/app.js"></script>
+<script>
+function togglePass() {
+  const inp = document.getElementById('password');
+  const btn = inp.parentElement.querySelector('.password-toggle');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'visibility'; }
+  else { inp.type = 'password'; btn.textContent = 'visibility_off'; }
+}
+
+async function handleSignup(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('global-error');
+  errEl.classList.remove('show');
+  const btn = document.getElementById('submit-btn');
+  btn.style.opacity = '0.7'; btn.style.pointerEvents = 'none';
+  btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px;">hourglass_top</span> Creating Account...';
+
+  const r = await api('POST', '/api/auth/register', {
+    student_id: document.getElementById('student-id').value.trim(),
+    name: document.getElementById('name').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value,
+    semester: parseInt(document.getElementById('semester').value)
+  });
+
+  if (r.ok) {
+    showToast('Account created! Welcome, ' + r.data.name + '!', 'celebration');
+    setTimeout(() => window.location.href = '/', 1000);
+  } else {
+    errEl.textContent = r.data.error || 'Registration failed.';
+    errEl.classList.add('show');
+    btn.style.opacity = ''; btn.style.pointerEvents = '';
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px;">how_to_reg</span> Create Account';
+  }
+  return false;
+}
+</script>
+</body>
+</html>

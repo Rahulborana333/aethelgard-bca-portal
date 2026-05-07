@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}CGPA Predictor | Aethelgard{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.predictor-container {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;
+}
+@media (max-width: 900px) { .predictor-container { grid-template-columns: 1fr; } }
+
+.predictor-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;
+    transition: all 0.3s;
+}
+.predictor-card:hover { border-color: var(--border-bright); box-shadow: 0 8px 25px var(--shadow); }
+
+.input-group { margin-bottom: 1.5rem; }
+.input-group label { display: block; margin-bottom: 0.5rem; color: var(--muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.input-group input, .input-group select {
+    width: 100%; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text-bright); border-radius: 10px; font-size: 1rem; font-family: 'Inter', sans-serif;
+    outline: none; transition: all 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+}
+.input-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+.input-group small { color: var(--muted); font-size: 0.75rem; margin-top: 4px; display: block; }
+
+.result-box {
+    margin-top: 2rem; padding: 2rem; border-radius: 16px;
+    background: var(--primary-dim); border: 1px solid var(--primary); text-align: center;
+}
+.result-box h3 { margin: 0 0 0.5rem 0; color: var(--primary); font-family: 'Newsreader', serif; font-size: 1.1rem; }
+.result-box .big-number { font-family: 'Newsreader', serif; font-size: 3rem; font-weight: 700; color: var(--text-bright); }
+.error-text { color: var(--error); display: none; margin-top: 0.5rem; font-size: 0.85rem; }
+
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 1.5rem; }
+@media(max-width:480px) { .scenario-grid { grid-template-columns: 1fr; } }
+.scenario-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px; text-align: center; cursor: pointer; transition: all 0.3s;
+}
+.scenario-card:hover { border-color: var(--primary); background: var(--primary-dim); }
+.scenario-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.scenario-card .val { font-family: 'Newsreader', serif; font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+</style>
+{% endblock %}
+
+{% block nav_cgpa %}active{% endblock %}
+
+{% block content %}
+<section class="fade-up" style="margin-bottom:1.5rem;">
+    <h1 style="font-family:'Newsreader',serif; font-size:2rem; color:var(--primary); margin-bottom:4px;">Interactive CGPA Predictor</h1>
+    <p style="color:var(--muted);">Set your graduation goal and calculate the required grades for your final semester.</p>
+</section>
+
+<div class="predictor-container">
+    <div class="predictor-card fade-up fade-up-d1 glow-hover">
+        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; color: var(--text-bright);">
+            <span class="material-symbols-outlined" style="color:var(--primary)">target</span> Goal Setter
+        </h3>
+
+        <div class="input-group">
+            <label>Current Cumulative GPA (Out of 4.0)</label>
+            <input type="number" id="current-cgpa" step="0.01" min="0" max="4.0" value="0.0" readonly>
+            <small>Loaded from your profile.</small>
+        </div>
+        <div class="input-group">
+            <label>Completed Credits (Semesters 1-5)</label>
+            <input type="number" id="completed-credits" value="100" readonly>
+            <small>Standard BCA credits up to Sem 5.</small>
+        </div>
+        <div class="input-group">
+            <label>Final Semester Credits (Sem 6)</label>
+            <input type="number" id="final-credits" value="20" readonly>
+        </div>
+        <div class="input-group">
+            <label>Target Graduation CGPA</label>
+            <input type="number" id="target-cgpa" step="0.01" min="0" max="4.0" placeholder="e.g. 3.8">
+            <div class="error-text" id="target-error">Invalid target.</div>
+        </div>
+
+        <button class="btn-gold" style="width: 100%; justify-content: center;" onclick="calculateRequired()">
+            <span class="material-symbols-outlined" style="font-size:18px;">calculate</span> Calculate Required SGPA
+        </button>
+
+        <div class="result-box" id="result-box" style="display: none;">
+            <h3>Required Semester 6 GPA</h3>
+            <div class="big-number" id="req-sgpa">0.00</div>
+            <p id="req-msg" style="color: var(--muted); margin-top: 0.5rem; font-size: 0.9rem;"></p>
+            <button class="btn-outline" style="margin-top: 1rem;" onclick="saveTarget()">
+                <span class="material-symbols-outlined" style="font-size:16px;">save</span> Save Target to Profile
+            </button>
+        </div>
+
+        <div class="scenario-grid" id="scenario-grid">
+            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='3.5';calculateRequired()">
+                <div class="label">First Class</div><div class="val">3.50</div>
+            </div>
+            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='3.7';calculateRequired()">
+                <div class="label">Distinction</div><div class="val">3.70</div>
+            </div>
+            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='3.9';calculateRequired()">
+                <div class="label">Outstanding</div><div class="val">3.90</div>
+            </div>
+            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='4.0';calculateRequired()">
+                <div class="label">Perfect</div><div class="val">4.00</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="predictor-card fade-up fade-up-d2">
+        <h3 style="margin-bottom: 1.5rem; color: var(--text-bright); display:flex; align-items:center; gap:8px;">
+            <span class="material-symbols-outlined" style="color:var(--primary)">show_chart</span> Trajectory Visualization
+        </h3>
+        <canvas id="cgpaChart"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentCgpa = 0.0;
+let savedTarget = 0.0;
+let chartInstance = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await api('GET', '/api/profile');
+        if (res.ok) {
+            currentCgpa = res.data.cgpa || 0.0;
+            savedTarget = res.data.target_cgpa || 4.0;
+            document.getElementById('current-cgpa').value = currentCgpa;
+            document.getElementById('target-cgpa').value = savedTarget;
+            initChart();
+            if(savedTarget > 0) calculateRequired();
+        }
+    } catch(e) { showToast("Error loading profile data", "error"); }
+});
+
+function calculateRequired() {
+    const errorEl = document.getElementById('target-error');
+    errorEl.style.display = 'none';
+    const target = parseFloat(document.getElementById('target-cgpa').value);
+    const current = parseFloat(document.getElementById('current-cgpa').value);
+    const compCredits = parseFloat(document.getElementById('completed-credits').value);
+    const finalCredits = parseFloat(document.getElementById('final-credits').value);
+
+    if (isNaN(target) || target < 0 || target > 4.0) {
+        errorEl.textContent = "Please enter a valid target between 0.0 and 4.0";
+        errorEl.style.display = 'block'; return;
+    }
+
+    const totalCredits = compCredits + finalCredits;
+    const requiredSgpa = ((target * totalCredits) - (current * compCredits)) / finalCredits;
+    const resBox = document.getElementById('result-box');
+    const reqSgpaEl = document.getElementById('req-sgpa');
+    const msgEl = document.getElementById('req-msg');
+    resBox.style.display = 'block';
+
+    if (requiredSgpa > 4.0) {
+        reqSgpaEl.textContent = "Impossible 😢"; reqSgpaEl.style.color = "var(--error)";
+        msgEl.textContent = `You need a ${requiredSgpa.toFixed(2)}, which is above the 4.0 limit.`;
+    } else if (requiredSgpa < 0) {
+        reqSgpaEl.textContent = "Guaranteed 🎉"; reqSgpaEl.style.color = "var(--success)";
+        msgEl.textContent = "You've already secured this target even if you fail everything!";
+    } else {
+        reqSgpaEl.textContent = requiredSgpa.toFixed(2); reqSgpaEl.style.color = "var(--text-bright)";
+        msgEl.textContent = "Maintain this SGPA in Sem 6 to hit your target.";
+    }
+    updateChart(target, Math.min(Math.max(requiredSgpa, 0), 4.0));
+}
+
+async function saveTarget() {
+    const target = parseFloat(document.getElementById('target-cgpa').value);
+    const res = await api('POST', '/api/user/target-cgpa', { target_cgpa: target });
+    if (res.ok) showToast("Target CGPA saved to your profile!", "check_circle");
+    else showToast("Failed to save target", "error");
+}
+
+function initChart() {
+    const ctx = document.getElementById('cgpaChart').getContext('2d');
+    Chart.defaults.color = getComputedStyle(document.body).getPropertyValue('--muted').trim() || '#6e8a7d';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Sem 1-5 Avg', 'Target Graduation'],
+            datasets: [
+                { label: 'Current Trajectory', data: [currentCgpa, currentCgpa], borderColor: 'rgba(212,175,55,0.2)', borderDash: [5, 5], tension: 0.1 },
+                { label: 'Required Trajectory', data: [currentCgpa, savedTarget], borderColor: '#d4af37', backgroundColor: 'rgba(212,175,55,0.1)', fill: true, tension: 0.1, pointBackgroundColor: '#d4af37', pointRadius: 6 }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { min: Math.max(0, currentCgpa - 1), max: 4.0, grid: { color: 'rgba(212,175,55,0.05)' } }, x: { grid: { display: false } } },
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+function updateChart(target, requiredSgpa) {
+    if(!chartInstance) return;
+    chartInstance.data.datasets[1].data = [currentCgpa, target];
+    chartInstance.options.scales.y.min = Math.max(0, Math.min(currentCgpa, target) - 0.5);
+    chartInstance.update();
+}
+</script>
+{% endblock %}

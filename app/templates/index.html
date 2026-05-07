@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Aethelgard BCA Portal{% endblock %}
+
+{% block head %}
+<style>
+  .pomodoro-ring { width:120px; height:120px; }
+  .pomodoro-ring circle { fill:none; stroke-width:6; stroke-linecap:round; }
+  .pomodoro-ring .bg { stroke:var(--surface); }
+  .pomodoro-ring .fg { stroke:var(--primary); transition:stroke-dashoffset 1s linear; transform:rotate(-90deg); transform-origin:center; }
+  .schedule-item { display:flex; align-items:center; padding:16px; background:var(--surface); border-left:3px solid var(--border); transition:all 0.3s; cursor:pointer; border-radius:0 8px 8px 0; }
+  .schedule-item:hover { background:#132030; border-left-color:var(--primary); }
+  .deadline-card { background:var(--card); border:1px solid var(--border); padding:20px; border-radius:12px; transition:all 0.3s; }
+  .deadline-card:hover { border-color:var(--primary); }
+  .quick-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:1rem; }
+  .notif-dot { width:8px; height:8px; border-radius:50%; background:var(--primary); display:none; position:absolute; top:2px; right:2px; }
+  .tech-ribbon { background:var(--primary-dim); border:1px solid rgba(37,99,235,0.15); border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:10px; margin-bottom:1.5rem; font-size:12px; color:var(--muted); }
+  .tech-ribbon strong { color:var(--primary); }
+  .tech-ribbon strong { color:var(--primary); }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block nav_dashboard %}active{% endblock %}
+{% block nav_mobile_dashboard %}active{% endblock %}
+
+{% block content %}
+    <!-- Tech Stack Ribbon -->
+    <div class="tech-ribbon fade-up">
+      <span class="material-symbols-outlined" style="color:var(--primary); font-size:18px;">verified</span>
+      <span>Full-Stack: <strong>Python Flask</strong> + <strong>SQLite</strong> + <strong>REST API</strong> + <strong>Session Auth</strong></span>
+    </div>
+
+    <!-- Welcome -->
+    <section class="fade-up" style="margin-bottom:2rem;">
+      <h1 id="greeting-text" style="font-family:'Newsreader',serif; font-size:2.5rem; font-weight:600; color:var(--primary); margin-bottom:4px;">Welcome back.</h1>
+      <p style="font-size:1.1rem; color:var(--muted); font-style:italic;" id="user-subtitle">BCA Semester VI</p>
+      <div class="quick-actions">
+        <a href="/task" class="btn-outline"><span class="material-symbols-outlined" style="font-size:18px;">add_task</span>Add Task</a>
+        <a href="/schedule" class="btn-outline"><span class="material-symbols-outlined" style="font-size:18px;">today</span>Today's Schedule</a>
+        <a href="/profile" class="btn-outline"><span class="material-symbols-outlined" style="font-size:18px;">calculate</span>GPA Calculator</a>
+      </div>
+    </section>
+
+    <!-- Stat Cards (loaded from API) -->
+    <div class="grid-4 fade-up fade-up-d1" style="margin-bottom:2rem;">
+      <div class="stat-card glow-hover">
+        <span class="material-symbols-outlined stat-icon">school</span>
+        <div class="stat-label">CGPA</div>
+        <div class="stat-value" id="counter-gpa">—</div>
+        <div class="stat-sub">Distinction</div>
+      </div>
+      <div class="stat-card glow-hover">
+        <span class="material-symbols-outlined stat-icon">check_circle</span>
+        <div class="stat-label">Attendance</div>
+        <div class="stat-value"><span id="counter-att">—</span><span id="att-pct" style="font-size:1.5rem;">%</span></div>
+        <div class="stat-sub">Above 75% Required</div>
+      </div>
+      <div class="stat-card glow-hover">
+        <span class="material-symbols-outlined stat-icon">pending_actions</span>
+        <div class="stat-label">Pending Tasks</div>
+        <div class="stat-value" id="counter-tasks">—</div>
+        <div class="stat-sub">Due this week</div>
+      </div>
+      <div class="stat-card glow-hover">
+        <span class="material-symbols-outlined stat-icon">emoji_events</span>
+        <div class="stat-label">Rank</div>
+        <div class="stat-value">#<span id="counter-rank">—</span></div>
+        <div class="stat-sub">Out of 62 students</div>
+      </div>
+    </div>
+
+    <div class="grid-12">
+      <!-- Left Column -->
+      <div>
+        <!-- Today's Schedule -->
+        <div class="glass-card fade-up fade-up-d2" style="margin-bottom:2rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h3 class="section-title" style="margin-bottom:0;">Today's Schedule</h3>
+            <span style="font-size:11px; text-transform:uppercase; letter-spacing:2px; color:var(--muted); font-weight:700;">Sem VI • 2024–25</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="schedule-item" onclick="location.href='/schedule'">
+              <div style="flex-shrink:0; width:64px; text-align:center; margin-right:20px; border-right:1px solid var(--border); padding-right:16px;">
+                <p style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1px;">09:00</p>
+                <p style="font-size:10px; color:var(--muted);">AM</p>
+              </div>
+              <div style="flex:1;">
+                <h4 style="font-family:'Newsreader',serif; font-size:1.1rem;">Database Management Systems</h4>
+                <p style="font-size:13px; color:var(--muted);">Computer Lab 3 • Prof. Rajan Mehta</p>
+              </div>
+              <span class="material-symbols-outlined" style="color:var(--muted); font-size:20px;">arrow_forward</span>
+            </div>
+            <div class="schedule-item" onclick="location.href='/schedule'">
+              <div style="flex-shrink:0; width:64px; text-align:center; margin-right:20px; border-right:1px solid var(--border); padding-right:16px;">
+                <p style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1px;">11:30</p>
+                <p style="font-size:10px; color:var(--muted);">AM</p>
+              </div>
+              <div style="flex:1;">
+                <h4 style="font-family:'Newsreader',serif; font-size:1.1rem;">Web Technologies</h4>
+                <p style="font-size:13px; color:var(--muted);">Seminar Hall A • Dr. Priya Sharma</p>
+              </div>
+              <span class="material-symbols-outlined" style="color:var(--muted); font-size:20px;">arrow_forward</span>
+            </div>
+            <div class="schedule-item" onclick="location.href='/schedule'">
+              <div style="flex-shrink:0; width:64px; text-align:center; margin-right:20px; border-right:1px solid var(--border); padding-right:16px;">
+                <p style="font-size:11px; color:var(--muted); font-weight:700; letter-spacing:1px;">02:00</p>
+                <p style="font-size:10px; color:var(--muted);">PM</p>
+              </div>
+              <div style="flex:1;">
+                <h4 style="font-family:'Newsreader',serif; font-size:1.1rem;">Data Structures &amp; Algorithms</h4>
+                <p style="font-size:13px; color:var(--muted);">Room 204 • Prof. Anil Verma</p>
+              </div>
+              <span class="material-symbols-outlined" style="color:var(--muted); font-size:20px;">arrow_forward</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Grades -->
+        <div class="scroll-reveal">
+          <h3 class="section-title">Recent Academic Performance</h3>
+          <div class="grid-4">
+            <div class="stat-card" style="text-align:center; padding:16px;">
+              <div class="stat-label">DBMS Quiz</div>
+              <div style="font-family:'Newsreader',serif; font-size:1.8rem; color:var(--primary);">96%</div>
+              <div class="progress-bar" style="margin-top:12px;"><div class="progress-bar-fill" data-width="96" style="width:0%;"></div></div>
+            </div>
+            <div class="stat-card" style="text-align:center; padding:16px;">
+              <div class="stat-label">Web Tech Lab</div>
+              <div style="font-family:'Newsreader',serif; font-size:1.8rem; color:var(--primary);">89%</div>
+              <div class="progress-bar" style="margin-top:12px;"><div class="progress-bar-fill" data-width="89" style="width:0%;"></div></div>
+            </div>
+            <div class="stat-card" style="text-align:center; padding:16px;">
+              <div class="stat-label">DSA Mid-Term</div>
+              <div style="font-family:'Newsreader',serif; font-size:1.8rem; color:var(--primary);">91%</div>
+              <div class="progress-bar" style="margin-top:12px;"><div class="progress-bar-fill" data-width="91" style="width:0%;"></div></div>
+            </div>
+            </div>
+            <div class="stat-card" style="text-align:center; padding:16px;">
+              <div class="stat-label">CN Practical</div>
+              <div style="font-family:'Newsreader',serif; font-size:1.8rem; color:var(--primary);">93%</div>
+              <div class="progress-bar" style="margin-top:12px;"><div class="progress-bar-fill" data-width="93" style="width:0%;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Task Completion Chart -->
+        <div class="glass-card scroll-reveal" style="margin-top:2rem;">
+          <h3 class="section-title">Task Completion Analytics</h3>
+          <div style="width: 100%; max-width: 300px; margin: 0 auto;">
+            <canvas id="taskChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div>
+        <!-- Pomodoro Timer -->
+        <div class="glass-card fade-up fade-up-d2" style="text-align:center; margin-bottom:2rem;">
+          <h3 class="section-title" style="margin-bottom:1rem;">Study Timer</h3>
+          <svg class="pomodoro-ring" viewBox="0 0 120 120">
+            <circle class="bg" cx="60" cy="60" r="52"/>
+            <circle class="fg" id="pomo-circle" cx="60" cy="60" r="52" stroke-dasharray="326.73" stroke-dashoffset="0"/>
+          </svg>
+          <div id="pomo-time" style="font-family:'Newsreader',serif; font-size:2.2rem; margin:12px 0 4px;">25:00</div>
+          <div id="pomo-label" style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:16px;">Focus Session</div>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <button class="btn-gold" id="pomo-start" onclick="togglePomodoro()" style="padding:8px 20px; font-size:14px;">
+              <span class="material-symbols-outlined" style="font-size:18px;">play_arrow</span>Start
+            </button>
+            <button class="btn-outline" onclick="resetPomodoro()" style="padding:8px 16px; font-size:14px;">
+              <span class="material-symbols-outlined" style="font-size:18px;">restart_alt</span>Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Upcoming Tasks (from DB) -->
+        <div class="fade-up fade-up-d3" style="margin-bottom:2rem;">
+          <h3 class="section-title">Approaching Deadlines</h3>
+          <div id="deadlines-list" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="deadline-card" style="text-align:center; color:var(--muted); padding:24px;">
+              <span class="material-symbols-outlined" style="font-size:40px; opacity:0.3;">hourglass_empty</span>
+              <p style="margin-top:8px; font-size:13px;">Loading deadlines...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance Overview -->
+        <div class="glass-card fade-up fade-up-d4">
+          <h3 class="section-title" style="margin-bottom:1rem;">Attendance Overview</h3>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;"><span>DBMS</span><span style="color:var(--primary);">92%</span></div><div class="progress-bar"><div class="progress-bar-fill" data-width="92" style="width:0%;"></div></div></div>
+            <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;"><span>Web Technologies</span><span style="color:var(--primary);">88%</span></div><div class="progress-bar"><div class="progress-bar-fill" data-width="88" style="width:0%;"></div></div></div>
+            <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;"><span>DSA</span><span style="color:var(--primary);">95%</span></div><div class="progress-bar"><div class="progress-bar-fill" data-width="95" style="width:0%;"></div></div></div>
+            <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;"><span>Computer Networks</span><span style="color:var(--error);">78%</span></div><div class="progress-bar"><div class="progress-bar-fill" data-width="78" style="width:0%; background:var(--error);"></div></div></div>
+            <div><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;"><span>Software Engineering</span><span style="color:var(--primary);">85%</span></div><div class="progress-bar"><div class="progress-bar-fill" data-width="85" style="width:0%;"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load stats from Python Flask API
+document.addEventListener('DOMContentLoaded', async function() {
+  const r = await api('GET', '/api/stats');
+  if (!r.ok) { window.location.href = '/login'; return; }
+  const d = r.data;
+
+  // Update greeting
+  document.getElementById('greeting-text').textContent = getGreeting(d.name.split(' ')[0]);
+  document.getElementById('user-subtitle').textContent = 'BCA Semester VI • ' + d.pending_tasks + ' tasks pending';
+
+  // Animate counters
+  animateCounter(document.getElementById('counter-gpa'), d.cgpa, 1200);
+  animateCounter(document.getElementById('counter-att'), d.attendance, 1000);
+  animateCounter(document.getElementById('counter-tasks'), d.pending_tasks, 600);
+  animateCounter(document.getElementById('counter-rank'), d.rank, 500);
+
+  // Update notification badges
+  if (d.unread_notifications > 0) {
+    const b1 = document.getElementById('notif-badge');
+    const b2 = document.getElementById('notif-badge-header');
+    if(b1){ b1.textContent = d.unread_notifications; b1.style.display = 'inline-block'; }
+    if(b2){ b2.textContent = d.unread_notifications; b2.style.display = 'inline-block'; }
+  }
+
+  // Render Chart.js
+  const ctx = document.getElementById('taskChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Completed', 'Pending', 'Overdue'],
+        datasets: [{
+          data: [d.completed_tasks, d.pending_tasks, d.overdue_tasks],
+          backgroundColor: [
+            '#28a745', // Success green
+            '#ffc107', // Warning yellow
+            '#dc3545'  // Danger red
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#a0aabf' } }
+        }
+      }
+    });
+  }
+
+  // Load upcoming tasks as deadlines
+  const tr = await api('GET', '/api/tasks');
+  if (tr.ok) {
+    const now = new Date();
+    const upcoming = tr.data
+      .filter(t => !t.done && new Date(t.due) > now)
+      .slice(0, 3);
+    const container = document.getElementById('deadlines-list');
+    if (upcoming.length === 0) {
+      container.innerHTML = '<div class="deadline-card" style="text-align:center; color:var(--muted);"><span class="material-symbols-outlined" style="font-size:40px; opacity:0.3; color:var(--success);">task_alt</span><p style="margin-top:8px; font-size:13px;">All tasks completed!</p></div>';
+    } else {
+      container.innerHTML = upcoming.map(function(t) {
+        const daysLeft = Math.ceil((new Date(t.due) - now) / 86400000);
+        const badgeClass = daysLeft <= 1 ? 'badge-danger' : daysLeft <= 3 ? 'badge-info' : 'badge-success';
+        const badgeText = daysLeft <= 0 ? 'Overdue' : daysLeft === 1 ? 'Due Tomorrow' : 'In ' + daysLeft + ' Days';
+        return '<div class="deadline-card"><span class="badge ' + badgeClass + '" style="margin-bottom:12px;">' + badgeText + '</span>' +
+          '<h4 style="font-family:\'Newsreader\',serif; font-size:1.05rem; margin-bottom:4px;">' + t.title + '</h4>' +
+          '<p style="font-size:12px; color:var(--muted); font-style:italic;">' + t.subject + '</p>' +
+          '<div style="font-size:11px; color:var(--primary); margin-top:10px; font-weight:700; letter-spacing:1px;">⏱ ' + formatCountdown(t.due) + '</div></div>';
+      }).join('');
+    }
+  }
+});
+
+// Pomodoro Timer
+let pomoSeconds = 25*60, pomoInterval = null, pomoRunning = false;
+const POMO_TOTAL = 25*60, POMO_CIRCUMFERENCE = 326.73;
+
+function updatePomoDisplay() {
+  const m = Math.floor(pomoSeconds/60), s = pomoSeconds%60;
+  document.getElementById('pomo-time').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  document.getElementById('pomo-circle').style.strokeDashoffset = POMO_CIRCUMFERENCE * (1 - pomoSeconds/POMO_TOTAL);
+}
+function togglePomodoro() {
+  if (pomoRunning) {
+    clearInterval(pomoInterval); pomoRunning = false;
+    document.getElementById('pomo-start').innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">play_arrow</span>Resume';
+  } else {
+    pomoRunning = true;
+    document.getElementById('pomo-start').innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">pause</span>Pause';
+    pomoInterval = setInterval(function() {
+      pomoSeconds--;
+      updatePomoDisplay();
+      if (pomoSeconds <= 0) {
+        clearInterval(pomoInterval); pomoRunning = false;
+        showToast('Pomodoro complete! Take a 5-minute break.', 'celebration');
+        document.getElementById('pomo-label').textContent = 'Break Time!';
+        document.getElementById('pomo-start').innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">play_arrow</span>Start';
+      }
+    }, 1000);
+  }
+}
+function resetPomodoro() {
+  clearInterval(pomoInterval); pomoRunning = false; pomoSeconds = POMO_TOTAL;
+  updatePomoDisplay();
+  document.getElementById('pomo-label').textContent = 'Focus Session';
+  document.getElementById('pomo-start').innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">play_arrow</span>Start';
+}
+</script>
+{% endblock %}

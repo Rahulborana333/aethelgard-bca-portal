@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign In | Aethelgard BCA Portal</title>
+<meta name="description" content="Sign in to Aethelgard BCA Student Portal — Python Flask Full-Stack Application"/>
+<link rel="stylesheet" href="/static/styles.css"/>
+<style>
+  .login-bg { background: var(--bg); position:relative; overflow:hidden; }
+  .login-card { background:var(--card); border:1px solid var(--border); border-radius:24px; padding:2.5rem; position:relative; overflow:hidden; max-width:440px; width:100%; box-shadow: 0 10px 40px var(--shadow); }
+  .login-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--primary),var(--secondary)); }
+  .login-header { text-align:center; margin-bottom:2rem; }
+  .login-header h1 { font-family:'Newsreader',serif; font-size:2rem; color:var(--text-bright); font-weight:700; }
+  .login-header p { font-size:12px; color:var(--primary); text-transform:uppercase; letter-spacing:2px; margin-top:4px; font-weight:600; }
+  .password-toggle { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:20px; font-family:'Material Symbols Outlined'; transition:color 0.3s; }
+  .password-toggle:hover { color:var(--primary); }
+  .form-error { color:var(--error); font-size:12px; margin-top:6px; display:none; }
+  .form-error.show { display:block; }
+  .demo-hint { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-top:1rem; font-size:12px; color:var(--text); text-align:center; box-shadow: 0 2px 8px var(--shadow); }
+  .demo-hint strong { color:var(--primary); font-weight:700; }
+  .tech-badge { display:flex; gap:8px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+  .tech-tag { background:var(--primary-dim); border:1px solid var(--border-bright); border-radius:20px; padding:4px 12px; font-size:10px; color:var(--primary); letter-spacing:1px; font-weight:700; }
+  .login-footer { text-align:center; margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--border); }
+  .login-footer a { color:var(--primary); font-weight:600; text-decoration:none; }
+  @keyframes slideUp { from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);} }
+  .slide-up { animation: slideUp 0.7s ease forwards; }
+  .btn-loading { opacity:0.7; pointer-events:none; }
+</style>
+</head>
+<body style="display:flex; flex-direction:column; min-height:100vh;">
+<header style="background:var(--surface); display:flex; justify-content:space-between; align-items:center; padding:0 2rem; height:70px; border-bottom:1px solid var(--border); position:relative;">
+  <div style="font-family:'Newsreader',serif; font-size:1.6rem; color:var(--text-bright); font-weight:700;">Aethelgard</div>
+  <nav style="display:flex; gap:1.5rem; align-items:center;">
+    <a href="/signup" class="btn-outline" style="padding:8px 20px; font-size:14px; text-decoration:none;">Create Account</a>
+  </nav>
+</header>
+
+<main class="login-bg" style="flex:1; display:flex; align-items:center; justify-content:center; padding:2rem;">
+  <div class="login-card slide-up">
+    <div class="login-header">
+      <div style="margin-bottom:1rem;">
+        <span class="material-symbols-outlined" style="font-size:48px; color:var(--primary);">school</span>
+      </div>
+      <h1>Aethelgard</h1>
+      <p>BCA Student Portal Access</p>
+      <div class="tech-badge" style="margin-top:12px;">
+        <span class="tech-tag">Python Flask</span>
+        <span class="tech-tag">SQLite</span>
+        <span class="tech-tag">REST API</span>
+      </div>
+    </div>
+
+    <div id="global-error" class="form-error" style="background:rgba(255,107,107,0.1); border:1px solid rgba(255,107,107,0.3); border-radius:8px; padding:10px 14px; margin-bottom:1rem; font-size:13px;"></div>
+
+    <form id="login-form" onsubmit="return handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label" for="student-id">Student ID</label>
+        <div class="form-input-icon">
+          <span class="material-symbols-outlined">badge</span>
+          <input class="form-input" id="student-id" type="text" placeholder="e.g. BCA2025001" required autocomplete="username"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <label class="form-label" for="password" style="margin-bottom:0;">Password</label>
+        </div>
+        <div class="form-input-icon" style="position:relative;">
+          <span class="material-symbols-outlined">lock</span>
+          <input class="form-input" id="password" type="password" placeholder="••••••••" required autocomplete="current-password"/>
+          <button type="button" class="password-toggle material-symbols-outlined" onclick="togglePassword()">visibility_off</button>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5rem;">
+        <input type="checkbox" id="remember" style="accent-color:var(--primary); width:16px; height:16px;"/>
+        <label for="remember" style="font-size:14px; color:var(--muted);">Remember me</label>
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn-gold" style="width:100%; justify-content:center; padding:14px; font-size:1.1rem;">
+        <span class="material-symbols-outlined" style="font-size:20px;">login</span> Sign In
+      </button>
+    </form>
+
+    <div class="demo-hint" style="cursor:pointer;" onclick="toggleDemoHint()" title="Click to show demo credentials">
+      <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+        <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">info</span>
+        <span style="font-size:12px; color:var(--muted);">Demo access available — <strong style="color:var(--primary);">click to reveal</strong></span>
+      </div>
+      <div id="demo-credentials" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+        <strong>Student Demo</strong><br/>
+        ID: <strong>BCA2025001</strong> &nbsp;|&nbsp; Password: <strong>demo123</strong>
+        <button type="button" onclick="fillDemo(event)" style="display:block; margin:8px auto 0; background:var(--primary-dim); border:1px solid var(--border-bright); color:var(--primary); border-radius:8px; padding:5px 14px; font-size:11px; cursor:pointer; font-weight:600;">Auto-fill & Login</button>
+      </div>
+    </div>
+
+    <div class="login-footer">
+      <p style="font-size:14px; color:var(--muted);">New student? <a href="/signup">Create an Account</a></p>
+    </div>
+  </div>
+</main>
+
+<footer style="background:var(--surface); border-top:1px solid var(--border); padding:1.5rem 2rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+  <div style="font-family:'Newsreader',serif; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:2px;">© 2025 Aethelgard Institute · Python Flask + SQLite</div>
+</footer>
+
+<div id="global-toast" class="toast"></div>
+<script src="/static/app.js"></script>
+<script>
+function toggleDemoHint() {
+  const creds = document.getElementById('demo-credentials');
+  creds.style.display = creds.style.display === 'none' ? 'block' : 'none';
+}
+
+function fillDemo(e) {
+  e.stopPropagation();
+  document.getElementById('student-id').value = 'BCA2025001';
+  document.getElementById('password').value = 'demo123';
+  document.getElementById('demo-credentials').style.display = 'none';
+  document.getElementById('login-form').dispatchEvent(new Event('submit'));
+}
+
+function togglePassword() {
+  const inp = document.getElementById('password');
+  const btn = inp.parentElement.querySelector('.password-toggle');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'visibility'; }
+  else { inp.type = 'password'; btn.textContent = 'visibility_off'; }
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('global-error');
+  errEl.classList.remove('show');
+  const btn = document.getElementById('submit-btn');
+  btn.classList.add('btn-loading');
+  btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px;">hourglass_top</span> Signing in...';
+
+  const r = await api('POST', '/api/auth/login', {
+    student_id: document.getElementById('student-id').value.trim(),
+    password: document.getElementById('password').value
+  });
+
+  if (r.ok) {
+    showToast('Welcome back, ' + r.data.name + '!', 'check_circle');
+    if (r.data.role === 'admin') {
+      setTimeout(() => window.location.href = '/admin', 800);
+    } else {
+      setTimeout(() => window.location.href = '/', 800);
+    }
+  } else {
+    errEl.textContent = r.data.error || 'Login failed. Please try again.';
+    errEl.classList.add('show');
+    btn.classList.remove('btn-loading');
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px;">login</span> Sign In';
+  }
+  return false;
+}
+</script>
+</body>
+</html>

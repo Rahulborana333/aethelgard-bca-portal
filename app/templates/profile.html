@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Profile | Aethelgard BCA Portal{% endblock %}
+
+{% block head %}
+<style>
+  .profile-hero { display:flex; gap:24px; align-items:center; flex-wrap:wrap; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px; margin-bottom:2rem; position:relative; overflow:hidden; }
+  .profile-hero::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--primary),transparent); }
+  .profile-avatar { width:100px; height:100px; border-radius:50%; overflow:hidden; border:3px solid var(--primary); flex-shrink:0; }
+  .profile-avatar img { width:100%; height:100%; object-fit:cover; }
+  .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:2rem; }
+  .info-item { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; }
+  .info-item .label { font-size:10px; text-transform:uppercase; letter-spacing:2px; color:var(--muted); font-weight:700; margin-bottom:6px; }
+  .info-item .value { font-family:'Newsreader',serif; font-size:1.2rem; }
+  .tab-bar { display:flex; gap:4px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:2rem; overflow-x:auto; }
+  .tab-btn { padding:10px 20px; border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:13px; font-weight:600; border-radius:8px; transition:all 0.3s; white-space:nowrap; }
+  .tab-btn.active { background:var(--primary); color:var(--surface); }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+  .gpa-row { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+  .gpa-result { background:var(--card); border:1px solid var(--primary); border-radius:16px; padding:24px; text-align:center; margin-top:1.5rem; }
+  .gpa-result .big { font-family:'Newsreader',serif; font-size:3rem; color:var(--primary); }
+  .att-subject { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
+  .att-bar-wrap { display:flex; align-items:center; gap:12px; margin-top:8px; }
+  .att-bar { flex:1; height:8px; background:var(--surface); border-radius:99px; overflow:hidden; }
+  .att-fill { height:100%; border-radius:99px; transition:width 1s ease; }
+  .cal-item { display:flex; align-items:center; gap:16px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
+  .cal-date { min-width:56px; text-align:center; background:var(--surface); border-radius:10px; padding:8px; }
+  .cal-date .day { font-family:'Newsreader',serif; font-size:1.5rem; font-weight:700; color:var(--primary); }
+  .cal-date .month { font-size:10px; text-transform:uppercase; letter-spacing:2px; color:var(--muted); }
+</style>
+{% endblock %}
+
+{% block nav_profile %}active{% endblock %}
+{% block nav_mobile_profile %}active{% endblock %}
+
+{% block content_area_style %}style="max-width:900px;"{% endblock %}
+
+{% block content %}
+    <div class="profile-hero fade-up">
+      <div class="profile-avatar"><img id="profile-pic" src="https://ui-avatars.com/api/?name=R&background=1B263B&color=C5A059&bold=true&size=200" alt="Profile"/></div>
+      <div>
+        <h1 id="profile-name" style="font-family:'Newsreader',serif; font-size:1.8rem;">Loading...</h1>
+        <p style="font-size:14px; color:var(--muted); margin-top:4px;"><span id="profile-branch" style="color:var(--primary);">BCA</span> • Semester <span id="profile-sem">VI</span> • ID: <span id="profile-id">—</span></p>
+        <p style="font-size:14px; color:var(--muted);" id="profile-email">—</p>
+        <span style="background:rgba(78,205,196,0.1);border:1px solid rgba(78,205,196,0.2);border-radius:6px;padding:3px 10px;font-size:10px;color:#4ecdc4;font-weight:700;margin-top:8px;display:inline-block;">SQLite Database</span>
+      </div>
+      <div style="margin-left:auto; display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+        <button class="btn-gold" onclick="downloadTranscript()"><span class="material-symbols-outlined" style="font-size:18px;">download</span>Download Transcript</button>
+        <button class="btn-outline" onclick="logout()"><span class="material-symbols-outlined" style="font-size:18px;">logout</span>Sign Out</button>
+      </div>
+    </div>
+
+    <div class="info-grid fade-up fade-up-d1">
+      <div class="info-item"><div class="label">Department</div><div class="value">Computer Applications</div></div>
+      <div class="info-item"><div class="label">Batch</div><div class="value">2022–2025</div></div>
+      <div class="info-item"><div class="label">CGPA</div><div class="value" id="info-cgpa" style="color:var(--primary);">—</div></div>
+      <div class="info-item"><div class="label">Attendance</div><div class="value" id="info-att" style="color:var(--success);">—</div></div>
+      <div class="info-item"><div class="label">Advisor</div><div class="value">Prof. Rajan Mehta</div></div>
+      <div class="info-item"><div class="label">Status</div><div class="value" style="color:var(--success);">Active</div></div>
+    </div>
+
+    <div class="tab-bar fade-up fade-up-d2">
+      <button class="tab-btn active" onclick="switchTab('gpa',this)">GPA Calculator</button>
+      <button class="tab-btn" onclick="switchTab('attendance',this)">Attendance</button>
+      <button class="tab-btn" onclick="switchTab('edit',this)">Edit Profile</button>
+      <button class="tab-btn" onclick="switchTab('calendar',this)">Academic Calendar</button>
+      <button class="tab-btn" onclick="switchTab('skills',this)">Skills</button>
+    </div>
+
+    <!-- GPA Tab -->
+    <div class="tab-content active" id="tab-gpa">
+      <div class="glass-card">
+        <h3 class="section-title">SGPA Calculator — Semester VI</h3>
+        <div id="gpa-subjects">
+          <div class="gpa-row"><div><label class="form-label">Subject</label><input class="form-input gpa-name" value="DBMS" readonly/></div><div><label class="form-label">Credits</label><input class="form-input gpa-credit" type="number" value="4" min="1" max="6"/></div><div><label class="form-label">Grade (10)</label><input class="form-input gpa-grade" type="number" value="9" min="0" max="10" step="0.5"/></div></div>
+          <div class="gpa-row"><div><input class="form-input gpa-name" value="Web Technologies" readonly/></div><div><input class="form-input gpa-credit" type="number" value="4" min="1" max="6"/></div><div><input class="form-input gpa-grade" type="number" value="8" min="0" max="10" step="0.5"/></div></div>
+          <div class="gpa-row"><div><input class="form-input gpa-name" value="DSA" readonly/></div><div><input class="form-input gpa-credit" type="number" value="4" min="1" max="6"/></div><div><input class="form-input gpa-grade" type="number" value="9" min="0" max="10" step="0.5"/></div></div>
+          <div class="gpa-row"><div><input class="form-input gpa-name" value="Computer Networks" readonly/></div><div><input class="form-input gpa-credit" type="number" value="3" min="1" max="6"/></div><div><input class="form-input gpa-grade" type="number" value="8" min="0" max="10" step="0.5"/></div></div>
+          <div class="gpa-row"><div><input class="form-input gpa-name" value="Software Engineering" readonly/></div><div><input class="form-input gpa-credit" type="number" value="3" min="1" max="6"/></div><div><input class="form-input gpa-grade" type="number" value="9" min="0" max="10" step="0.5"/></div></div>
+        </div>
+        <button class="btn-gold" onclick="calculateGPA()" style="margin-top:1rem; width:100%; justify-content:center;"><span class="material-symbols-outlined" style="font-size:18px;">calculate</span>Calculate SGPA</button>
+        <div class="gpa-result" id="gpa-result" style="display:none;"><div style="font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:8px;">Your SGPA</div><div class="big" id="gpa-value">0.00</div><div id="gpa-grade-label" style="font-family:'Newsreader',serif;font-style:italic;font-size:1.2rem;color:var(--text);margin-top:8px;"></div></div>
+      </div>
+    </div>
+
+    <!-- Attendance Tab -->
+    <div class="tab-content" id="tab-attendance">
+      <div class="glass-card">
+        <h3 class="section-title">Subject-wise Attendance</h3>
+        <div class="att-subject"><div style="display:flex;justify-content:space-between;"><strong>Database Management Systems</strong><span class="badge badge-success">Safe</span></div><div class="att-bar-wrap"><div class="att-bar"><div class="att-fill" data-width="92" style="width:0%;background:var(--success);"></div></div><span style="color:var(--success);font-weight:700;">92%</span></div></div>
+        <div class="att-subject"><div style="display:flex;justify-content:space-between;"><strong>Web Technologies</strong><span class="badge badge-success">Safe</span></div><div class="att-bar-wrap"><div class="att-bar"><div class="att-fill" data-width="88" style="width:0%;background:var(--success);"></div></div><span style="color:var(--success);font-weight:700;">88%</span></div></div>
+        <div class="att-subject"><div style="display:flex;justify-content:space-between;"><strong>Data Structures &amp; Algorithms</strong><span class="badge badge-success">Safe</span></div><div class="att-bar-wrap"><div class="att-bar"><div class="att-fill" data-width="95" style="width:0%;background:var(--success);"></div></div><span style="color:var(--success);font-weight:700;">95%</span></div></div>
+        <div class="att-subject"><div style="display:flex;justify-content:space-between;"><strong>Computer Networks</strong><span class="badge badge-danger">At Risk</span></div><div class="att-bar-wrap"><div class="att-bar"><div class="att-fill" data-width="78" style="width:0%;background:var(--error);"></div></div><span style="color:var(--error);font-weight:700;">78%</span></div></div>
+        <div class="att-subject"><div style="display:flex;justify-content:space-between;"><strong>Software Engineering</strong><span class="badge badge-success">Safe</span></div><div class="att-bar-wrap"><div class="att-bar"><div class="att-fill" data-width="85" style="width:0%;background:var(--success);"></div></div><span style="color:var(--success);font-weight:700;">85%</span></div></div>
+        <div style="margin-top:1.5rem;padding:16px;background:var(--surface);border-radius:12px;display:flex;align-items:center;gap:12px;"><span class="material-symbols-outlined" style="color:var(--primary);">info</span><p style="font-size:13px;color:var(--muted);">Minimum 75% attendance required to sit for exams.</p></div>
+      </div>
+    </div>
+
+    <!-- Edit Profile Tab -->
+    <div class="tab-content" id="tab-edit">
+      <div class="glass-card">
+        <h3 class="section-title">Edit Profile <small style="font-size:12px;color:var(--muted);font-family:Inter,sans-serif;font-weight:400;">· Saved to SQLite via Flask API</small></h3>
+        <form onsubmit="return saveProfile(event)">
+          <div class="grid-2" style="gap:16px;">
+            <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="edit-name" type="text" required/></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="edit-email" type="email" required/></div>
+          </div>
+          <div class="form-group"><label class="form-label">Semester</label><select class="form-input" id="edit-semester"><option value="1">Semester 1</option><option value="2">Semester 2</option><option value="3">Semester 3</option><option value="4">Semester 4</option><option value="5">Semester 5</option><option value="6">Semester 6</option></select></div>
+          <button type="submit" class="btn-gold" style="width:100%;justify-content:center;margin-top:8px;"><span class="material-symbols-outlined" style="font-size:18px;">save</span>Save to Database</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Academic Calendar Tab -->
+    <div class="tab-content" id="tab-calendar">
+      <div class="glass-card">
+        <h3 class="section-title">Upcoming Academic Events</h3>
+        <div class="cal-item"><div class="cal-date"><div class="day">15</div><div class="month">May</div></div><div><strong>Internal Assessment II</strong><p style="font-size:13px;color:var(--muted);">All subjects • Written examination</p></div></div>
+        <div class="cal-item"><div class="cal-date"><div class="day">22</div><div class="month">May</div></div><div><strong>Project Submission Deadline</strong><p style="font-size:13px;color:var(--muted);">Final year BCA project with documentation</p></div></div>
+        <div class="cal-item"><div class="cal-date"><div class="day">01</div><div class="month">Jun</div></div><div><strong>Semester VI Examinations Begin</strong><p style="font-size:13px;color:var(--muted);">University final exams — 2 week duration</p></div></div>
+        <div class="cal-item"><div class="cal-date"><div class="day">10</div><div class="month">Jun</div></div><div><strong>Viva Voce / Project Defense</strong><p style="font-size:13px;color:var(--muted);">Present final project before external panel</p></div></div>
+      </div>
+    </div>
+
+    <!-- Skills Tab -->
+    <div class="tab-content" id="tab-skills">
+      <div class="glass-card">
+        <h3 class="section-title">Technical Skills &amp; Achievements</h3>
+        <div style="margin-bottom:2rem;"><div class="form-label" style="margin-bottom:12px;">Programming Languages</div><div style="display:flex;gap:8px;flex-wrap:wrap;"><span class="badge badge-info">C++</span><span class="badge badge-info">Java</span><span class="badge badge-info">Python</span><span class="badge badge-info">JavaScript</span><span class="badge badge-info">SQL</span></div></div>
+        <div style="margin-bottom:2rem;"><div class="form-label" style="margin-bottom:12px;">Web &amp; Backend</div><div style="display:flex;gap:8px;flex-wrap:wrap;"><span class="badge badge-info">HTML5</span><span class="badge badge-info">CSS3</span><span class="badge badge-info">Python Flask</span><span class="badge badge-info">SQLite</span><span class="badge badge-info">REST API</span><span class="badge badge-info">MySQL</span></div></div>
+        <div><div class="form-label" style="margin-bottom:12px;">Achievements</div>
+          <div class="cal-item"><span class="material-symbols-outlined" style="color:var(--primary);font-size:32px;">emoji_events</span><div><strong>1st Place — Inter-College Hackathon 2024</strong><p style="font-size:13px;color:var(--muted);">Built a student management system in 24 hours</p></div></div>
+          <div class="cal-item"><span class="material-symbols-outlined" style="color:var(--primary);font-size:32px;">workspace_premium</span><div><strong>Dean's List — Semester V</strong><p style="font-size:13px;color:var(--muted);">Secured SGPA 9.4 with distinction</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if (id==='attendance') setTimeout(()=>{ document.querySelectorAll('.att-fill').forEach(b=>{ b.style.width=b.getAttribute('data-width')+'%'; }); }, 100);
+}
+
+function calculateGPA() {
+  const credits = document.querySelectorAll('.gpa-credit');
+  const grades = document.querySelectorAll('.gpa-grade');
+  let totalCredits = 0, totalPoints = 0;
+  credits.forEach((c,i) => { const cr=parseFloat(c.value)||0; const gr=parseFloat(grades[i].value)||0; totalCredits+=cr; totalPoints+=cr*gr; });
+  const sgpa = totalCredits > 0 ? (totalPoints/totalCredits) : 0;
+  document.getElementById('gpa-result').style.display = 'block';
+  document.getElementById('gpa-value').textContent = sgpa.toFixed(2);
+  let label = 'Needs Improvement';
+  if (sgpa>=9) label='Outstanding 🏆'; else if (sgpa>=8) label='Excellent ⭐'; else if (sgpa>=7) label='Very Good'; else if (sgpa>=6) label='Good';
+  document.getElementById('gpa-grade-label').textContent = label;
+  showToast('SGPA: ' + sgpa.toFixed(2), 'school');
+}
+
+async function saveProfile(e) {
+  e.preventDefault();
+  const r = await api('PUT', '/api/profile', { name:document.getElementById('edit-name').value, email:document.getElementById('edit-email').value, semester:document.getElementById('edit-semester').value });
+  if (r.ok) { showToast('Profile updated in database!', 'check_circle'); loadProfile(); }
+  else showToast('Error: ' + (r.data.error||'Failed'), 'error');
+  return false;
+}
+
+async function loadProfile() {
+  const r = await api('GET', '/api/profile');
+  if (!r.ok) { window.location.href = '/login'; return; }
+  const d = r.data;
+  document.getElementById('profile-name').textContent = d.name;
+  document.getElementById('profile-branch').textContent = d.branch;
+  document.getElementById('profile-sem').textContent = d.semester;
+  document.getElementById('profile-id').textContent = d.student_id;
+  document.getElementById('profile-email').textContent = d.email;
+  document.getElementById('info-cgpa').textContent = d.cgpa;
+  document.getElementById('info-att').textContent = d.attendance + '%';
+  document.getElementById('edit-name').value = d.name;
+  document.getElementById('edit-email').value = d.email;
+  document.getElementById('edit-semester').value = d.semester;
+  const avatarUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(d.name) + '&background=1B263B&color=C5A059&bold=true&size=200';
+  document.getElementById('profile-pic').src = avatarUrl;
+  document.getElementById('header-avatar').src = avatarUrl;
+}
+
+function downloadTranscript() {
+  showToast('Generating PDF Transcript...', 'picture_as_pdf');
+  
+  // Create a hidden, clean HTML structure just for the PDF
+  const transcriptHTML = `
+    <div style="padding: 40px; font-family: 'Times New Roman', serif; color: #000; background: #fff;">
+      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px;">
+        <h1 style="font-size: 28px; margin: 0; text-transform: uppercase;">Aethelgard University</h1>
+        <p style="font-size: 16px; margin: 5px 0;">Official Academic Transcript</p>
+      </div>
+      
+      <div style="margin-bottom: 30px;">
+        <p><strong>Student Name:</strong> ${document.getElementById('profile-name').innerText}</p>
+        <p><strong>Student ID:</strong> ${document.getElementById('profile-id').innerText}</p>
+        <p><strong>Program:</strong> Bachelor of Computer Applications (BCA)</p>
+        <p><strong>Semester:</strong> ${document.getElementById('profile-sem').innerText}</p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+        <tr>
+          <th style="border: 1px solid #000; padding: 10px; text-align: left; background: #f0f0f0;">Performance Metric</th>
+          <th style="border: 1px solid #000; padding: 10px; text-align: left; background: #f0f0f0;">Value</th>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 10px;">Cumulative Grade Point Average (CGPA)</td>
+          <td style="border: 1px solid #000; padding: 10px;">${document.getElementById('info-cgpa').innerText}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 10px;">Aggregate Attendance</td>
+          <td style="border: 1px solid #000; padding: 10px;">${document.getElementById('info-att').innerText}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #000; padding: 10px;">Academic Standing</td>
+          <td style="border: 1px solid #000; padding: 10px;">Good Standing</td>
+        </tr>
+      </table>
+
+      <div style="margin-top: 50px; text-align: right;">
+        <p style="border-top: 1px solid #000; display: inline-block; padding-top: 5px; min-width: 200px; text-align: center;">Registrar Signature</p>
+        <p style="margin-top: 5px; font-size: 12px;">Date: ${new Date().toLocaleDateString('en-IN')}</p>
+      </div>
+    </div>
+  `;
+
+  // Create a temporary element to hold the HTML
+  const element = document.createElement('div');
+  element.innerHTML = transcriptHTML;
+
+  const opt = {
+    margin:       10,
+    filename:     'Academic_Transcript_' + document.getElementById('profile-id').innerText + '.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save().then(() => {
+    showToast('Transcript Downloaded Successfully!', 'check_circle');
+  });
+}
+
+document.addEventListener('DOMContentLoaded', loadProfile);
+</script>
+{% endblock %}
