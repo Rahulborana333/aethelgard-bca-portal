@@ -14,6 +14,9 @@ for _name in ['werkzeug', 'eventlet.wsgi.server', 'engineio', 'socketio']:
 
 app = create_app()
 
+# Ensure the database and demo accounts are created even when running via Gunicorn
+init_db(app)
+
 # Suppress eventlet's raw WSGI request log lines (127.0.0.1 - - [...])
 try:
     import eventlet.wsgi
@@ -72,7 +75,6 @@ def get_local_ip():
         return "127.0.0.1"
 
 if __name__ == '__main__':
-    init_db(app)
     local_ip = get_local_ip()
     _log(f"\n  {Y}{'━' * 53}{R}")
     _log(f"  {B}🎓  Aethelgard BCA Portal{R}  —  Python Flask + SQLite")
