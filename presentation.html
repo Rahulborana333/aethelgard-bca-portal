@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aethelgard BCA Portal - Presentation</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#0f1623;color:#e2e8f0;overflow:hidden;height:100vh;}
+.slide{display:none;height:100vh;padding:50px 70px;flex-direction:column;justify-content:center;align-items:center;text-align:center;animation:fadeIn 0.4s ease;}
+.slide.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:translateY(0);}}
+.badge{background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#60a5fa;padding:6px 18px;border-radius:50px;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;display:inline-block;}
+h1{font-size:clamp(2rem,4.5vw,3.8rem);font-weight:800;line-height:1.1;margin-bottom:16px;color:#f1f5f9;}
+h2{font-size:clamp(1.4rem,2.5vw,2.2rem);font-weight:700;margin-bottom:24px;color:#f1f5f9;}
+.accent{color:#60a5fa;}
+p.sub{font-size:1rem;color:#94a3b8;line-height:1.8;max-width:680px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:960px;margin-top:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%;max-width:960px;margin-top:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;width:100%;max-width:960px;margin-top:16px;}
+.card{background:#1a2235;border:1px solid #2d3748;border-radius:14px;padding:22px;text-align:left;}
+.card:hover{border-color:#3b82f6;}
+.card-icon{font-size:1.8rem;margin-bottom:10px;}
+.card h3{font-size:0.95rem;font-weight:600;margin-bottom:6px;color:#e2e8f0;}
+.card p{font-size:0.82rem;color:#64748b;margin:0;line-height:1.6;}
+.card .stat{font-size:1.8rem;font-weight:800;color:#60a5fa;margin-bottom:4px;}
+table{width:100%;max-width:820px;border-collapse:collapse;margin-top:16px;font-size:0.88rem;}
+th{background:#1a2235;padding:11px 18px;text-align:left;color:#60a5fa;border-bottom:1px solid #2d3748;}
+td{padding:10px 18px;border-bottom:1px solid #1e2d40;color:#cbd5e1;text-align:left;}
+tr:hover td{background:rgba(59,130,246,0.05);}
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px;}
+.flow-box{background:#1a2235;border:1px solid #2d3748;border-radius:10px;padding:12px 20px;font-size:0.85rem;font-weight:600;color:#e2e8f0;}
+.flow-box.highlight{border-color:#3b82f6;color:#60a5fa;}
+.arrow{color:#3b82f6;font-size:1.2rem;}
+.info-box{background:#1a2235;border:1px solid #2d3748;border-left:3px solid #3b82f6;border-radius:0 10px 10px 0;padding:14px 20px;margin:6px 0;text-align:left;width:100%;max-width:780px;}
+.info-box h4{color:#60a5fa;font-size:0.85rem;font-weight:600;margin-bottom:4px;}
+.info-box p{color:#94a3b8;font-size:0.82rem;line-height:1.6;margin:0;}
+.chart-wrap{background:#1a2235;border:1px solid #2d3748;border-radius:14px;padding:20px;display:flex;flex-direction:column;align-items:center;}
+.chart-wrap h3{color:#94a3b8;font-size:0.85rem;font-weight:600;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase;}
+.tag{padding:7px 14px;border-radius:6px;font-size:0.82rem;font-weight:600;border:1px solid #2d3748;background:#1a2235;color:#94a3b8;}
+.tag-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;}
+.nav{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;gap:12px;z-index:100;}
+.nav button{background:#1a2235;border:1px solid #2d3748;color:#e2e8f0;padding:10px 26px;border-radius:50px;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.25s;font-family:'Inter',sans-serif;}
+.nav button:hover{background:#3b82f6;border-color:#3b82f6;}
+.counter{position:fixed;top:22px;right:28px;color:#475569;font-size:0.82rem;font-weight:500;}
+.progress{position:fixed;top:0;left:0;height:3px;background:#3b82f6;transition:width 0.4s ease;}
+.check-list{list-style:none;text-align:left;max-width:680px;width:100%;}
+.check-list li{color:#94a3b8;font-size:0.9rem;line-height:2;border-bottom:1px solid #1e2d40;padding:4px 0;}
+.check-list li::before{content:"→ ";color:#3b82f6;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide active" id="s1">
+  <div class="badge">🎓 BCA Final Year Project — 2025</div>
+  <h1>Aethelgard<br><span class="accent">BCA Portal</span></h1>
+  <p class="sub">A full-stack academic management platform — Python Flask backend, SQLite database, JWT authentication, real-time WebSocket chat, and an AI-powered admin dashboard.</p>
+  <div class="tag-row" style="margin-top:28px;">
+    <span class="tag">Python Flask</span><span class="tag">SQLite</span><span class="tag">JWT Auth</span><span class="tag">WebSocket</span><span class="tag">HTML/CSS/JS</span>
+  </div>
+  <p class="sub" style="margin-top:24px;font-size:0.82rem;color:#475569;">Rahul Sharma &nbsp;|&nbsp; BCA2025001 &nbsp;|&nbsp; Semester VI &nbsp;|&nbsp; 2024–25</p>
+</div>
+
+<!-- SLIDE 2: PROBLEM STATEMENT -->
+<div class="slide" id="s2">
+  <div class="badge">📌 Problem Statement</div>
+  <h2>What Problem Does This <span class="accent">Solve?</span></h2>
+  <div class="grid-4">
+    <div class="card"><div class="card-icon">📋</div><h3>No Central System</h3><p>Students juggle attendance, results, tasks across multiple disconnected tools.</p></div>
+    <div class="card"><div class="card-icon">🔓</div><h3>Weak Security</h3><p>Existing portals store plain-text passwords with no proper session management.</p></div>
+    <div class="card"><div class="card-icon">📡</div><h3>No Real-Time</h3><p>No live study rooms or instant notifications — all communication is offline.</p></div>
+    <div class="card"><div class="card-icon">📊</div><h3>No Analytics</h3><p>Faculty have no way to monitor student performance or send bulk alerts.</p></div>
+  </div>
+  <div class="info-box" style="margin-top:20px;max-width:960px;">
+    <h4>Our Approach</h4>
+    <p>Build a single unified web portal that handles student academics, secure login, real-time collaboration, and an admin control center — all running on a lightweight Python Flask server with no external cloud dependency.</p>
+  </div>
+</div>
+
+<!-- SLIDE 3: SOLUTION OVERVIEW -->
+<div class="slide" id="s3">
+  <div class="badge">💡 Solution Overview</div>
+  <h2>What Our Portal <span class="accent">Provides</span></h2>
+  <div class="grid-2" style="max-width:900px;">
+    <div>
+      <ul class="check-list">
+        <li>Student Dashboard with CGPA, Attendance & Rank</li>
+        <li>JWT-secured login — no plain-text passwords ever</li>
+        <li>Assignment Task Manager with deadlines & priority</li>
+        <li>Live Study Room via WebSocket real-time chat</li>
+        <li>Smart notifications with danger/warning/info types</li>
+        <li>E-Library with sample papers & important questions</li>
+        <li>Automated deadline reminders every hour</li>
+      </ul>
+    </div>
+    <div>
+      <ul class="check-list">
+        <li>Admin Command Center — full student management</li>
+        <li>Role-based access — admin vs student separation</li>
+        <li>Student risk assessment & performance analytics</li>
+        <li>Bulk messaging and individual student outreach</li>
+        <li>Audit log for all admin actions</li>
+        <li>Modular Blueprint architecture for clean code</li>
+        <li>One-command startup — runs on any machine</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: TECH STACK WITH CHART -->
+<div class="slide" id="s4">
+  <div class="badge">🛠️ Technology Stack</div>
+  <h2>Tools & <span class="accent">Technologies Used</span></h2>
+  <div class="grid-2" style="align-items:start;">
+    <table>
+      <tr><th>Layer</th><th>Technology</th><th>Why?</th></tr>
+      <tr><td>Backend</td><td>Python Flask</td><td>Lightweight, flexible, easy to learn</td></tr>
+      <tr><td>Database</td><td>SQLite + SQLAlchemy</td><td>No server needed, file-based</td></tr>
+      <tr><td>Auth</td><td>JWT + Werkzeug</td><td>Industry-standard token auth</td></tr>
+      <tr><td>Real-Time</td><td>Flask-SocketIO</td><td>WebSocket for instant messaging</td></tr>
+      <tr><td>Scheduler</td><td>APScheduler</td><td>Background automated tasks</td></tr>
+      <tr><td>Email</td><td>Flask-Mail</td><td>Notification delivery</td></tr>
+      <tr><td>Frontend</td><td>HTML + CSS + JS</td><td>No framework needed, fast load</td></tr>
+    </table>
+    <div class="chart-wrap">
+      <h3>Project Tech Distribution</h3>
+      <canvas id="techChart" width="280" height="220"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: SYSTEM ARCHITECTURE -->
+<div class="slide" id="s5">
+  <div class="badge">🏗️ System Architecture</div>
+  <h2>How the System <span class="accent">Works</span></h2>
+  <div class="flow" style="margin-bottom:20px;">
+    <div class="flow-box">🌐 Browser (Student/Admin)</div>
+    <div class="arrow">→</div>
+    <div class="flow-box highlight">Flask Routes (Blueprint)</div>
+    <div class="arrow">→</div>
+    <div class="flow-box highlight">JWT Middleware</div>
+    <div class="arrow">→</div>
+    <div class="flow-box">SQLAlchemy ORM</div>
+    <div class="arrow">→</div>
+    <div class="flow-box">SQLite Database</div>
+  </div>
+  <div class="grid-3" style="margin-top:10px;">
+    <div class="info-box"><h4>📁 Blueprint Pattern</h4><p>Code is split into 4 modules: auth, views, api, admin. Each module handles its own routes independently — easy to maintain and debug.</p></div>
+    <div class="info-box"><h4>🔄 MVC Architecture</h4><p>Model = database tables (models.py), View = HTML templates (Jinja2), Controller = route functions (routes/). Industry-standard design pattern.</p></div>
+    <div class="info-box"><h4>📡 Event-Driven (SocketIO)</h4><p>Study Room uses WebSocket events. When a student sends a message, the server broadcasts it to ALL connected users instantly — no page refresh needed.</p></div>
+  </div>
+  <div class="info-box" style="margin-top:14px;max-width:960px;">
+    <h4>Folder Structure</h4>
+    <p>project/ → run.py (entry) | app/__init__.py (factory) | app/models.py (DB tables) | app/routes/ (auth, views, api, admin) | app/templates/ (HTML) | app/static/ (CSS/JS) | instance/aethelgard.db (database file)</p>
+  </div>
+</div>
+
+<!-- SLIDE 6: KEY FEATURES WITH CHART -->
+<div class="slide" id="s6">
+  <div class="badge">✨ Key Features</div>
+  <h2>Feature <span class="accent">Overview</span></h2>
+  <div class="grid-2" style="align-items:start;max-width:960px;">
+    <div class="grid-2" style="margin-top:0;">
+      <div class="card"><div class="card-icon">🏠</div><h3>Student Dashboard</h3><p>CGPA, attendance %, rank, active tasks — all in one view on login.</p></div>
+      <div class="card"><div class="card-icon">💬</div><h3>Live Study Room</h3><p>Real-time group chat. Messages appear instantly across all browsers.</p></div>
+      <div class="card"><div class="card-icon">👑</div><h3>Admin Panel</h3><p>Manage all students, view risk scores, send messages, view audit log.</p></div>
+      <div class="card"><div class="card-icon">📚</div><h3>E-Library</h3><p>Sample papers, important questions, study notes — all downloadable.</p></div>
+      <div class="card"><div class="card-icon">✅</div><h3>Task Manager</h3><p>Add assignments with subject, priority (high/medium/low) and due date.</p></div>
+      <div class="card"><div class="card-icon">🔔</div><h3>Notifications</h3><p>4 types: success, info, warning, danger — color-coded alerts for students.</p></div>
+    </div>
+    <div class="chart-wrap">
+      <h3>Feature Complexity Score</h3>
+      <canvas id="featureChart" width="300" height="280"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: DATABASE DESIGN -->
+<div class="slide" id="s7">
+  <div class="badge">🗄️ Database Design</div>
+  <h2>Database <span class="accent">Structure</span></h2>
+  <div class="grid-2" style="align-items:start;max-width:960px;">
+    <table>
+      <tr><th colspan="3">Tables & Key Fields</th></tr>
+      <tr><td>👤 User</td><td>student_id, name, role, cgpa, attendance, rank, is_active</td><td>All users</td></tr>
+      <tr><td>✅ Task</td><td>user_id (FK), title, subject, priority, due_date, done</td><td>Assignments</td></tr>
+      <tr><td>🔔 Notification</td><td>user_id (FK), title, message, type, read</td><td>Alerts</td></tr>
+      <tr><td>📄 SamplePaper</td><td>title, subject, file_path, type</td><td>Library</td></tr>
+    </table>
+    <div class="chart-wrap">
+      <h3>Database Table Size (rows in demo)</h3>
+      <canvas id="dbChart" width="300" height="240"></canvas>
+    </div>
+  </div>
+  <div class="info-box" style="margin-top:14px;max-width:960px;">
+    <h4>Key Concepts Used</h4>
+    <p><strong style="color:#60a5fa;">Foreign Key:</strong> Task.user_id links to User.id — one student can have many tasks (One-to-Many). &nbsp;|&nbsp; <strong style="color:#60a5fa;">ORM:</strong> SQLAlchemy converts Python classes into SQL tables automatically. &nbsp;|&nbsp; <strong style="color:#60a5fa;">Migration:</strong> ALTER TABLE used to add columns without losing data.</p>
+  </div>
+</div>
+
+<!-- SLIDE 8: CHALLENGES -->
+<div class="slide" id="s8">
+  <div class="badge">⚡ Challenges & Solutions</div>
+  <h2>Problems We <span class="accent">Solved</span></h2>
+  <div class="grid-2" style="align-items:start;max-width:960px;">
+    <div>
+      <div class="info-box"><h4>🔌 Port Conflict (OSError: Address in use)</h4><p><strong>Problem:</strong> Moving the folder left old Python processes running on port 5001.<br><strong>Fix:</strong> Used <code>lsof -i :5001</code> to detect zombie processes and killed them. Added a one-liner startup script to auto-clear port before launch.</p></div>
+      <div class="info-box"><h4>🔐 Secure Authentication Setup</h4><p><strong>Problem:</strong> Standard session auth is insecure; plain cookies can be tampered.<br><strong>Fix:</strong> Implemented JWT (JSON Web Token) stored in HttpOnly cookies. Every route checks the token before serving any data.</p></div>
+      <div class="info-box"><h4>🗄️ Database Column Migration</h4><p><strong>Problem:</strong> Needed to add <code>is_active</code> column to existing database without wiping data.<br><strong>Fix:</strong> Used <code>ALTER TABLE user ADD COLUMN is_active</code> inside a try/except block — safe and automatic.</p></div>
+    </div>
+    <div>
+      <div class="info-box"><h4>📡 Real-Time Message Broadcast</h4><p><strong>Problem:</strong> HTTP is one-way — browser requests, server responds. Can't push live messages.<br><strong>Fix:</strong> Integrated Flask-SocketIO + Eventlet. WebSocket keeps a persistent connection so server can push messages to ALL connected clients instantly.</p></div>
+      <div class="info-box"><h4>🧑‍💼 Role-Based Access Control</h4><p><strong>Problem:</strong> Students should not access admin routes; admins need separate permissions.<br><strong>Fix:</strong> Added <code>role</code> field (student/admin) to User model. Every admin route checks JWT identity and role before allowing access.</p></div>
+      <div class="info-box"><h4>⏰ Background Scheduler Conflict</h4><p><strong>Problem:</strong> APScheduler started twice in debug mode (Flask reloader runs app twice).<br><strong>Fix:</strong> Added <code>if not scheduler.running: scheduler.start()</code> guard to prevent duplicate scheduler instances.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: CONCLUSION -->
+<div class="slide" id="s9">
+  <div class="badge">🏁 Conclusion</div>
+  <h2>Thank You — <span class="accent">Questions?</span></h2>
+  <div class="grid-2" style="align-items:start;max-width:960px;">
+    <div class="chart-wrap">
+      <h3>Project Score vs Typical BCA Projects</h3>
+      <canvas id="compareChart" width="340" height="260"></canvas>
+    </div>
+    <div>
+      <div class="info-box"><h4>🎯 What We Built</h4><p>A complete, production-ready full-stack web application with secure authentication, real-time features, admin analytics, and automated background tasks.</p></div>
+      <div class="info-box"><h4>📚 Technologies Mastered</h4><p>Python Flask · SQLAlchemy ORM · JWT Authentication · WebSocket · APScheduler · Blueprint Architecture · Werkzeug Security · Jinja2 Templating</p></div>
+      <div class="info-box"><h4>🔑 Demo Credentials</h4><p>🌐 URL: <strong style="color:#60a5fa;">http://127.0.0.1:5001</strong><br>👤 Student: <strong style="color:#60a5fa;">BCA2025001 / demo123</strong><br>👑 Admin: <strong style="color:#60a5fa;">ADMIN / admin123</strong></p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="btn-prev" onclick="changeSlide(-1)">← Previous</button>
+  <button id="btn-next" onclick="changeSlide(1)">Next →</button>
+</div>
+<div class="counter" id="counter">1 / 9</div>
+
+<script>
+let current = 1;
+const total = 9;
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
+const progress = document.getElementById('progress');
+
+function updateButtons() {
+  btnPrev.style.display = current === 1 ? 'none' : 'inline-block';
+  btnNext.style.display = current === total ? 'none' : 'inline-block';
+  progress.style.width = ((current / total) * 100) + '%';
+}
+
+function changeSlide(dir) {
+  document.getElementById('s' + current).classList.remove('active');
+  current = Math.min(Math.max(current + dir, 1), total);
+  document.getElementById('s' + current).classList.add('active');
+  document.getElementById('counter').textContent = current + ' / ' + total;
+  updateButtons();
+  renderCharts();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') changeSlide(-1);
+});
+updateButtons();
+
+// Chart.js defaults
+Chart.defaults.color = '#64748b';
+Chart.defaults.borderColor = '#1e2d40';
+const BLUE = '#3b82f6';
+const SLATE = '#475569';
+const charts = {};
+
+function renderCharts() {
+  // Tech chart (slide 4)
+  if (current === 4 && !charts.tech) {
+    charts.tech = new Chart(document.getElementById('techChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Python/Flask', 'HTML/CSS/JS', 'SQLAlchemy', 'SocketIO', 'JWT/Auth', 'APScheduler'],
+        datasets: [{ data: [30, 25, 18, 12, 10, 5],
+          backgroundColor: ['#3b82f6','#1e40af','#2563eb','#1d4ed8','#1e3a8a','#172554'],
+          borderWidth: 0 }]
+      },
+      options: { plugins: { legend: { position: 'right', labels: { font: { size: 11 }, padding: 10 } } }, cutout: '65%' }
+    });
+  }
+  // Feature complexity (slide 6)
+  if (current === 6 && !charts.feature) {
+    charts.feature = new Chart(document.getElementById('featureChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Dashboard', 'Study Room', 'Admin Panel', 'E-Library', 'Task Mgr', 'Auth'],
+        datasets: [{ label: 'Complexity (1-10)', data: [7, 9, 10, 5, 6, 8],
+          backgroundColor: '#3b82f6', borderRadius: 6, borderWidth: 0 }]
+      },
+      options: { indexAxis: 'y', plugins: { legend: { display: false } },
+        scales: { x: { max: 10, grid: { color: '#1e2d40' } }, y: { grid: { display: false } } } }
+    });
+  }
+  // DB size chart (slide 7)
+  if (current === 7 && !charts.db) {
+    charts.db = new Chart(document.getElementById('dbChart'), {
+      type: 'bar',
+      data: {
+        labels: ['User', 'Task', 'Notification', 'SamplePaper'],
+        datasets: [{ label: 'Rows (demo)', data: [2, 6, 4, 2],
+          backgroundColor: ['#3b82f6','#1e40af','#2563eb','#1d4ed8'], borderRadius: 6, borderWidth: 0 }]
+      },
+      options: { plugins: { legend: { display: false } },
+        scales: { y: { grid: { color: '#1e2d40' } }, x: { grid: { display: false } } } }
+    });
+  }
+  // Compare chart (slide 9)
+  if (current === 9 && !charts.compare) {
+    charts.compare = new Chart(document.getElementById('compareChart'), {
+      type: 'radar',
+      data: {
+        labels: ['Security', 'Real-Time', 'Admin Panel', 'Database', 'Code Quality', 'Features'],
+        datasets: [
+          { label: 'Our Project', data: [9, 9, 10, 8, 9, 9],
+            borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)', pointBackgroundColor: '#3b82f6' },
+          { label: 'Typical BCA', data: [4, 2, 3, 5, 4, 4],
+            borderColor: '#475569', backgroundColor: 'rgba(71,85,105,0.1)', pointBackgroundColor: '#475569' }
+        ]
+      },
+      options: { scales: { r: { min: 0, max: 10, ticks: { stepSize: 2, font: { size: 10 } }, grid: { color: '#1e2d40' }, pointLabels: { font: { size: 11 } } } },
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+    });
+  }
+}
+</script>
+</body>
+</html>

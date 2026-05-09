@@ -1,7 +1,7 @@
 import os
 from werkzeug.utils import secure_filename
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
 from app.models import User, Task, Notification, SamplePaper, EBook, Bookmark
 from app.utils import current_user
@@ -14,10 +14,11 @@ def api_stats():
     user = current_user()
     if not user:
         return jsonify({'error': 'Unauthorized'}), 401
-    now = datetime.now()
+    now = datetime.now(timezone.utc)  # timezone-aware to match DB
     tasks = Task.query.filter_by(user_id=user.id).all()
-    pending = sum(1 for t in tasks if not t.done and t.due_date > now)
-    overdue = sum(1 for t in tasks if not t.done and t.due_date <= now)
+    def _due(t): return t.due_date.replace(tzinfo=timezone.utc) if t.due_date.tzinfo is None else t.due_date
+    pending = sum(1 for t in tasks if not t.done and _due(t) > now)
+    overdue = sum(1 for t in tasks if not t.done and _due(t) <= now)
     completed = sum(1 for t in tasks if t.done)
     unread = Notification.query.filter_by(user_id=user.id, read=False).count()
     return jsonify({
@@ -44,7 +45,8 @@ def api_tasks_post():
         return jsonify({'error': 'Unauthorized'}), 401
     data = request.get_json() or {}
     try:
-        due = datetime.fromisoformat(data.get('due', ''))
+        due_str = data.get('due', '').replace('Z', '+00:00')  # fix JS toISOString() 'Z' suffix
+        due = datetime.fromisoformat(due_str)
     except Exception:
         return jsonify({'error': 'Invalid due date format'}), 400
 
@@ -81,7 +83,8 @@ def api_tasks_put(tid):
         task.description = data['desc']
     if 'due' in data:
         try:
-            task.due_date = datetime.fromisoformat(data['due'])
+            due_str = data['due'].replace('Z', '+00:00')  # fix JS toISOString() 'Z' suffix
+            task.due_date = datetime.fromisoformat(due_str)
         except Exception:
             pass
     if 'done' in data:
@@ -206,8 +209,8 @@ def update_target_cgpa():
         return jsonify({'error': 'target_cgpa required'}), 400
     try:
         target = float(data['target_cgpa'])
-        if target < 0 or target > 4.0:
-            return jsonify({'error': 'Invalid target CGPA (must be 0-4.0)'}), 400
+        if target < 0 or target > 10.0:
+            return jsonify({'error': 'Invalid target CGPA (must be 0-10.0)'}), 400
         user.target_cgpa = target
         db.session.commit()
         return jsonify({'success': True, 'target_cgpa': target})

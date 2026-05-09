@@ -61,8 +61,8 @@
         </h3>
 
         <div class="input-group">
-            <label>Current Cumulative GPA (Out of 4.0)</label>
-            <input type="number" id="current-cgpa" step="0.01" min="0" max="4.0" value="0.0" readonly>
+            <label>Current Cumulative GPA (Out of 10.0)</label>
+            <input type="number" id="current-cgpa" step="0.01" min="0" max="10.0" value="0.0" readonly>
             <small>Loaded from your profile.</small>
         </div>
         <div class="input-group">
@@ -76,7 +76,7 @@
         </div>
         <div class="input-group">
             <label>Target Graduation CGPA</label>
-            <input type="number" id="target-cgpa" step="0.01" min="0" max="4.0" placeholder="e.g. 3.8">
+            <input type="number" id="target-cgpa" step="0.01" min="0" max="10.0" placeholder="e.g. 9.0">
             <div class="error-text" id="target-error">Invalid target.</div>
         </div>
 
@@ -94,17 +94,17 @@
         </div>
 
         <div class="scenario-grid" id="scenario-grid">
-            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='3.5';calculateRequired()">
-                <div class="label">First Class</div><div class="val">3.50</div>
+            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='7.0';calculateRequired()">
+                <div class="label">First Class</div><div class="val">7.00</div>
             </div>
-            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='3.7';calculateRequired()">
-                <div class="label">Distinction</div><div class="val">3.70</div>
+            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='8.0';calculateRequired()">
+                <div class="label">Distinction</div><div class="val">8.00</div>
             </div>
-            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='3.9';calculateRequired()">
-                <div class="label">Outstanding</div><div class="val">3.90</div>
+            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='9.0';calculateRequired()">
+                <div class="label">Outstanding</div><div class="val">9.00</div>
             </div>
-            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='4.0';calculateRequired()">
-                <div class="label">Perfect</div><div class="val">4.00</div>
+            <div class="scenario-card" onclick="document.getElementById('target-cgpa').value='10.0';calculateRequired()">
+                <div class="label">Perfect</div><div class="val">10.00</div>
             </div>
         </div>
     </div>
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const res = await api('GET', '/api/profile');
         if (res.ok) {
             currentCgpa = res.data.cgpa || 0.0;
-            savedTarget = res.data.target_cgpa || 4.0;
+            savedTarget = res.data.target_cgpa || 9.0;
             document.getElementById('current-cgpa').value = currentCgpa;
             document.getElementById('target-cgpa').value = savedTarget;
             initChart();
@@ -146,8 +146,8 @@ function calculateRequired() {
     const compCredits = parseFloat(document.getElementById('completed-credits').value);
     const finalCredits = parseFloat(document.getElementById('final-credits').value);
 
-    if (isNaN(target) || target < 0 || target > 4.0) {
-        errorEl.textContent = "Please enter a valid target between 0.0 and 4.0";
+    if (isNaN(target) || target < 0 || target > 10.0) {
+        errorEl.textContent = "Please enter a valid target between 0.0 and 10.0";
         errorEl.style.display = 'block'; return;
     }
 
@@ -158,9 +158,9 @@ function calculateRequired() {
     const msgEl = document.getElementById('req-msg');
     resBox.style.display = 'block';
 
-    if (requiredSgpa > 4.0) {
+    if (requiredSgpa > 10.0) {
         reqSgpaEl.textContent = "Impossible 😢"; reqSgpaEl.style.color = "var(--error)";
-        msgEl.textContent = `You need a ${requiredSgpa.toFixed(2)}, which is above the 4.0 limit.`;
+        msgEl.textContent = `You need a ${requiredSgpa.toFixed(2)}, which exceeds the 10.0 limit.`;
     } else if (requiredSgpa < 0) {
         reqSgpaEl.textContent = "Guaranteed 🎉"; reqSgpaEl.style.color = "var(--success)";
         msgEl.textContent = "You've already secured this target even if you fail everything!";
@@ -168,7 +168,7 @@ function calculateRequired() {
         reqSgpaEl.textContent = requiredSgpa.toFixed(2); reqSgpaEl.style.color = "var(--text-bright)";
         msgEl.textContent = "Maintain this SGPA in Sem 6 to hit your target.";
     }
-    updateChart(target, Math.min(Math.max(requiredSgpa, 0), 4.0));
+    updateChart(target, Math.min(Math.max(requiredSgpa, 0), 10.0));
 }
 
 async function saveTarget() {
@@ -193,7 +193,7 @@ function initChart() {
         },
         options: {
             responsive: true,
-            scales: { y: { min: Math.max(0, currentCgpa - 1), max: 4.0, grid: { color: 'rgba(212,175,55,0.05)' } }, x: { grid: { display: false } } },
+            scales: { y: { min: Math.max(0, currentCgpa - 1), max: 10.0, grid: { color: 'rgba(212,175,55,0.05)' } }, x: { grid: { display: false } } },
             plugins: { legend: { position: 'bottom' } }
         }
     });

@@ -60,13 +60,26 @@ def _after(resp):
     return resp
 
 
+def get_local_ip():
+    try:
+        import socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
 if __name__ == '__main__':
     init_db(app)
+    local_ip = get_local_ip()
     _log(f"\n  {Y}{'━' * 53}{R}")
     _log(f"  {B}🎓  Aethelgard BCA Portal{R}  —  Python Flask + SQLite")
     _log(f"  {Y}{'━' * 53}{R}")
-    _log(f"  🌐  {B}http://127.0.0.1:5001{R}")
-    _log(f"  📋  Demo: {B}BCA2025001{R} / demo123")
+    _log(f"  💻  Local:   {B}http://127.0.0.1:5001{R}")
+    _log(f"  🌐  Network: {B}http://{local_ip}:5001{R} (Share this link!)")
+    _log(f"  📋  Demo:    {B}BCA2025001{R} / demo123")
     _log(f"  {Y}{'━' * 53}{R}")
     _log(f"  {D}Listening for requests...{R}\n")
 

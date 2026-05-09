@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
-from app.models import EBook
+from app.models import EBook, User
+from app.utils import current_user
 
 views_bp = Blueprint('views', __name__)
 
@@ -17,12 +18,20 @@ def is_logged_in():
 def index():
     if not is_logged_in():
         return redirect('/login')
+    # If the logged-in user is an admin, redirect them to the admin panel
+    user = current_user()
+    if user and user.role == 'admin':
+        return redirect('/admin/')
     return render_template('index.html')
 
 
 @views_bp.route('/login')
 def login_page():
     if is_logged_in():
+        # Redirect admins directly to admin panel from login page too
+        user = current_user()
+        if user and user.role == 'admin':
+            return redirect('/admin/')
         return redirect('/')
     return render_template('login.html')
 

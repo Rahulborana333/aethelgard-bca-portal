@@ -31,10 +31,10 @@ def api_admin_stats():
     total_notifications = Notification.query.count()
     total_bookmarks = Bookmark.query.count()
 
-    # CGPA distribution for pie chart
-    high_performers = User.query.filter(User.role == 'student', User.cgpa >= 3.5).count()
-    mid_performers = User.query.filter(User.role == 'student', User.cgpa >= 2.5, User.cgpa < 3.5).count()
-    low_performers = User.query.filter(User.role == 'student', User.cgpa < 2.5).count()
+    # CGPA distribution for pie chart (10-point scale)
+    high_performers = User.query.filter(User.role == 'student', User.cgpa >= 8.0).count()
+    mid_performers = User.query.filter(User.role == 'student', User.cgpa >= 5.0, User.cgpa < 8.0).count()
+    low_performers = User.query.filter(User.role == 'student', User.cgpa < 5.0).count()
 
     # Attendance distribution
     good_attendance = User.query.filter(User.role == 'student', User.attendance >= 80).count()
@@ -351,3 +351,186 @@ def api_export_students():
     csv_data = output.getvalue()
     from flask import Response
     return Response(csv_data, mimetype='text/csv', headers={'Content-Disposition': 'attachment;filename=students_export.csv'})
+
+
+# ═══════════════════════════════════════════════════
+#  AI INTELLIGENCE ENGINE
+# ═══════════════════════════════════════════════════
+
+def _calc_health_score(student):
+    """Calculate AI Health Score (0–100) for a student."""
+    cgpa = student.cgpa or 0
+    attendance = student.attendance or 0
+    tasks = student.tasks
+    task_completion = (sum(1 for t in tasks if t.done) / len(tasks) * 100) if tasks else 50
+    score = round((cgpa / 10.0) * 40 + (attendance / 100) * 35 + (task_completion / 100) * 25)
+    return score, round(task_completion)
+
+
+@admin_bp.route('/api/ai/insights', methods=['GET'])
+@admin_required
+def api_ai_insights():
+    """AI-powered class-wide insights and recommendations."""
+    students = User.query.filter_by(role='student').all()
+    if not students:
+        return jsonify({'insights': [], 'class_health': 0, 'at_risk_count': 0,
+                        'recommendations': [], 'total_students': 0})
+
+    total = len(students)
+    at_risk, low_cgpa, low_att, high_perf, suspended_list = [], [], [], [], []
+
+    for s in students:
+        score, _ = _calc_health_score(s)
+        is_active = s.is_active if s.is_active is not None else True
+        if not is_active:
+            suspended_list.append(s)
+        if (s.cgpa or 0) < 5.0:
+            low_cgpa.append(s)
+        if (s.attendance or 0) < 60:
+            low_att.append(s)
+        if (s.cgpa or 0) < 5.0 and (s.attendance or 0) < 60:
+            at_risk.append(s)
+        if (s.cgpa or 0) >= 8.0 and (s.attendance or 0) >= 80:
+            high_perf.append(s)
+
+    avg_cgpa = sum(s.cgpa or 0 for s in students) / total
+    avg_att = sum(s.attendance or 0 for s in students) / total
+    all_scores = [_calc_health_score(s)[0] for s in students]
+    class_health = round(sum(all_scores) / total)
+
+    insights, recommendations = [], []
+
+    if at_risk:
+        insights.append({'type': 'danger', 'icon': 'crisis_alert',
+            'title': f'{len(at_risk)} Students Critically At Risk',
+            'desc': f'{len(at_risk)} students have CGPA below 2.5 AND attendance below 60%. Immediate intervention is required.',
+            'count': len(at_risk), 'names': [s.name for s in at_risk[:3]]})
+        recommendations.append(f'Schedule urgent counseling sessions for {len(at_risk)} at-risk students.')
+
+    if len(low_att) > total * 0.25:
+        recommendations.append('Send an urgent attendance warning broadcast — over 25% of students are below 60%.')
+
+    if low_att:
+        insights.append({'type': 'warning', 'icon': 'event_busy',
+            'title': f'{len(low_att)} Students Have Poor Attendance',
+            'desc': f'{len(low_att)} out of {total} students have attendance below 60%, risking exam eligibility.',
+            'count': len(low_att), 'names': []})
+
+    if low_cgpa:
+        insights.append({'type': 'warning', 'icon': 'grade',
+            'title': f'{len(low_cgpa)} Students Below Minimum CGPA',
+            'desc': f'{len(low_cgpa)} students have CGPA below 5.0. Additional academic support is recommended.',
+            'count': len(low_cgpa), 'names': []})
+
+    if high_perf:
+        insights.append({'type': 'success', 'icon': 'emoji_events',
+            'title': f'{len(high_perf)} High Performers Identified',
+            'desc': f'{len(high_perf)} students have CGPA ≥ 8.0 and attendance ≥ 80%. Consider merit recognition.',
+            'count': len(high_perf), 'names': [s.name for s in high_perf[:3]]})
+        recommendations.append(f'Send merit congratulation notifications to {len(high_perf)} high performers.')
+
+    if avg_att >= 80:
+        insights.append({'type': 'success', 'icon': 'trending_up',
+            'title': 'Excellent Class Attendance Rate',
+            'desc': f'Average attendance is {round(avg_att, 1)}% — above the 80% threshold. Great overall engagement!',
+            'count': None, 'names': []})
+
+    if suspended_list:
+        insights.append({'type': 'info', 'icon': 'manage_accounts',
+            'title': f'{len(suspended_list)} Accounts Currently Suspended',
+            'desc': f'{len(suspended_list)} student accounts are suspended. Review these cases and restore if resolved.',
+            'count': len(suspended_list), 'names': []})
+
+    if not recommendations:
+        recommendations.append('All systems look healthy! Keep monitoring student performance regularly.')
+
+    return jsonify({
+        'insights': insights, 'class_health': class_health,
+        'at_risk_count': len(at_risk), 'high_performers_count': len(high_perf),
+        'avg_cgpa': round(avg_cgpa, 2), 'avg_attendance': round(avg_att, 1),
+        'recommendations': recommendations, 'total_students': total,
+        'low_cgpa_count': len(low_cgpa), 'low_att_count': len(low_att)
+    })
+
+
+@admin_bp.route('/api/ai/at-risk', methods=['GET'])
+@admin_required
+def api_ai_at_risk():
+    """Get all students with AI health scores, sorted worst-first."""
+    students = User.query.filter_by(role='student').all()
+    result = []
+    for s in students:
+        health_score, task_completion = _calc_health_score(s)
+        is_active = s.is_active if s.is_active is not None else True
+
+        if health_score >= 75:
+            risk_level, risk_label = 'low', 'Healthy'
+        elif health_score >= 55:
+            risk_level, risk_label = 'medium', 'Monitor'
+        elif health_score >= 35:
+            risk_level, risk_label = 'high', 'At Risk'
+        else:
+            risk_level, risk_label = 'critical', 'Critical'
+
+        issues = []
+        if (s.cgpa or 0) < 5.0:
+            issues.append('Low CGPA')
+        if (s.attendance or 0) < 60:
+            issues.append('Poor Attendance')
+        if not is_active:
+            issues.append('Suspended')
+        if task_completion < 30 and s.tasks:
+            issues.append('Low Task Completion')
+
+        result.append({**s.to_dict(), 'health_score': health_score,
+                        'risk_level': risk_level, 'risk_label': risk_label,
+                        'task_completion': task_completion, 'issues': issues})
+
+    result.sort(key=lambda x: x['health_score'])
+    return jsonify(result)
+
+
+@admin_bp.route('/api/ai/smart-message/<int:sid>', methods=['GET'])
+@admin_required
+def api_ai_smart_message(sid):
+    """Generate AI-suggested personalized messages for a student."""
+    student = User.query.get_or_404(sid)
+    cgpa = student.cgpa or 0
+    attendance = student.attendance or 0
+    tasks = student.tasks
+    task_completion = (sum(1 for t in tasks if t.done) / len(tasks) * 100) if tasks else 50
+    health_score, _ = _calc_health_score(student)
+
+    suggestions = []
+
+    if attendance < 60:
+        suggestions.append({'type': 'danger', 'label': '🚨 Attendance Warning',
+            'title': 'Urgent: Critical Attendance Alert',
+            'message': f'Dear {student.name}, your current attendance stands at {attendance}%, which is critically below the required 75% threshold. You are at immediate risk of being barred from semester examinations. Please attend all upcoming classes without fail and contact your faculty advisor at the earliest.'})
+
+    if cgpa < 5.0:
+        suggestions.append({'type': 'warning', 'label': '⚠️ CGPA Alert',
+            'title': 'Academic Performance Needs Improvement',
+            'message': f'Dear {student.name}, we have noted that your CGPA of {cgpa} is below the minimum required standard of 5.0 out of 10. Please make use of the E-Library resources, attend remedial sessions, and consult your subject teachers for guidance. Your improvement in upcoming assessments is critical.'})
+
+    if cgpa >= 8.0 and attendance >= 80:
+        suggestions.append({'type': 'success', 'label': '🏆 Merit Recognition',
+            'title': 'Outstanding Academic Achievement — Congratulations!',
+            'message': f'Dear {student.name}, we are delighted to recognize your outstanding academic performance! Your CGPA of {cgpa} out of 10 and attendance of {attendance}% place you among the top performers of this semester. Your dedication and hard work are truly commendable. Keep excelling!'})
+
+    if task_completion < 40 and tasks:
+        suggestions.append({'type': 'warning', 'label': '📋 Task Reminder',
+            'title': 'Pending Assignments Require Immediate Attention',
+            'message': f'Dear {student.name}, our records show that several of your assignments remain incomplete on the academic portal. Timely submission of tasks is an important part of your overall academic profile. Please review your pending tasks and submit them before the respective deadlines.'})
+
+    if attendance >= 90:
+        suggestions.append({'type': 'success', 'label': '🎖️ Attendance Star',
+            'title': 'Excellent Attendance — Keep It Up!',
+            'message': f'Dear {student.name}, your attendance of {attendance}% is truly exemplary and reflects your commitment to academics. The faculty and administration appreciate your regularity. Keep up this wonderful habit throughout the semester!'})
+
+    suggestions.append({'type': 'info', 'label': '📢 General Reminder',
+        'title': 'General Academic Update & Reminder',
+        'message': f'Dear {student.name}, this is a general reminder to stay on track with your academic responsibilities. Regular attendance, timely assignment completion, and active use of portal resources are key to your success. The faculty team is always available for guidance and support.'})
+
+    return jsonify({'student': student.to_dict(), 'health_score': health_score,
+                    'task_completion': round(task_completion), 'suggestions': suggestions})

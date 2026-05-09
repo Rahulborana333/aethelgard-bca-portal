@@ -303,6 +303,11 @@
                     <span class="material-symbols-outlined">campaign</span>
                     <span>Broadcast</span>
                 </div>
+                <div class="admin-nav-item" data-tab="ai" style="position:relative;">
+                    <span class="material-symbols-outlined">auto_awesome</span>
+                    <span>AI Intelligence</span>
+                    <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:linear-gradient(135deg,#d4af37,#f5c842);color:#000;font-size:9px;font-weight:800;padding:2px 6px;border-radius:20px;letter-spacing:0.5px;">NEW</span>
+                </div>
                 <div class="admin-nav-item" data-tab="logs">
                     <span class="material-symbols-outlined">history</span>
                     <span>Audit Logs</span>
@@ -547,6 +552,79 @@
                     </form>
                 </div>
             </section>
+            <!-- ══════════════ AI INTELLIGENCE TAB ══════════════ -->
+            <section id="ai" class="tab-content">
+                <div class="section-title">
+                    <span class="material-symbols-outlined" style="color:var(--primary)">auto_awesome</span>
+                    AI Intelligence Engine
+                </div>
+                <p style="color:var(--muted);margin-bottom:2rem;font-size:0.9rem;">Rule-based academic AI that analyses student data in real-time and generates actionable insights, risk alerts, and smart recommendations.</p>
+
+                <!-- Top KPI Row -->
+                <div id="ai-kpi-row" class="metrics-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:2rem;">
+                    <div class="metric-card"><div class="metric-icon" style="background:rgba(212,175,55,0.12);"><span class="material-symbols-outlined">monitor_heart</span></div><div class="metric-info"><h4>Class Health</h4><p id="ai-class-health">—</p></div></div>
+                    <div class="metric-card"><div class="metric-icon" style="background:rgba(224,108,117,0.12);color:var(--error);border-color:rgba(224,108,117,0.2);"><span class="material-symbols-outlined">crisis_alert</span></div><div class="metric-info"><h4>At Risk</h4><p id="ai-at-risk" style="color:var(--error)">—</p></div></div>
+                    <div class="metric-card"><div class="metric-icon" style="background:rgba(76,175,80,0.12);color:#4caf50;border-color:rgba(76,175,80,0.2);"><span class="material-symbols-outlined">emoji_events</span></div><div class="metric-info"><h4>High Performers</h4><p id="ai-high-perf" style="color:#4caf50">—</p></div></div>
+                    <div class="metric-card"><div class="metric-icon"><span class="material-symbols-outlined">school</span></div><div class="metric-info"><h4>Avg CGPA</h4><p id="ai-avg-cgpa">—</p></div></div>
+                    <div class="metric-card"><div class="metric-icon"><span class="material-symbols-outlined">event_available</span></div><div class="metric-info"><h4>Avg Attendance</h4><p id="ai-avg-att">—</p></div></div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:2rem;">
+                    <!-- AI Insights Cards -->
+                    <div>
+                        <h3 style="color:var(--text-bright);margin-bottom:1rem;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="color:var(--primary);font-size:20px;">lightbulb</span>Live AI Insights</h3>
+                        <div id="ai-insights-container" style="display:flex;flex-direction:column;gap:12px;">
+                            <div style="text-align:center;padding:2rem;color:var(--muted);"><span class="material-symbols-outlined" style="font-size:40px;animation:spin 1.5s linear infinite;">progress_activity</span><p>Analysing student data...</p></div>
+                        </div>
+                    </div>
+                    <!-- AI Recommendations -->
+                    <div>
+                        <h3 style="color:var(--text-bright);margin-bottom:1rem;display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="color:var(--primary);font-size:20px;">tips_and_updates</span>AI Recommendations</h3>
+                        <div id="ai-recommendations" class="glass-card" style="padding:1.5rem;display:flex;flex-direction:column;gap:10px;min-height:200px;">
+                            <div style="text-align:center;padding:1rem;color:var(--muted);">Loading...</div>
+                        </div>
+                        <div style="margin-top:1rem;">
+                            <h4 style="color:var(--text-bright);margin-bottom:0.75rem;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;">Quick Actions</h4>
+                            <div style="display:flex;flex-direction:column;gap:8px;">
+                                <button class="btn-outline" style="font-size:13px;padding:10px 14px;text-align:left;justify-content:flex-start;" onclick="broadcastFromAI('warning','⚠️ Attendance Alert','Dear Students, your attendance is critically low. Please ensure regular class attendance to avoid being barred from examinations.')"><span class="material-symbols-outlined" style="font-size:16px;">campaign</span> Broadcast Attendance Warning</button>
+                                <button class="btn-outline" style="font-size:13px;padding:10px 14px;text-align:left;justify-content:flex-start;" onclick="broadcastFromAI('success','🏆 Merit Announcement','Dear Students, we congratulate all high-performing students this semester. Your dedication and hard work are truly commendable. Keep excelling!')"><span class="material-symbols-outlined" style="font-size:16px;">emoji_events</span> Broadcast Merit Recognition</button>
+                                <button class="btn-outline" style="font-size:13px;padding:10px 14px;text-align:left;justify-content:flex-start;" onclick="broadcastFromAI('info','📚 Exam Prep Reminder','Dear Students, the semester examination is approaching. Please utilise the E-Library resources, review your notes, and complete all pending assignments.')"><span class="material-symbols-outlined" style="font-size:16px;">menu_book</span> Broadcast Exam Reminder</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Risk Monitor Table -->
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                    <h3 style="color:var(--text-bright);display:flex;align-items:center;gap:8px;"><span class="material-symbols-outlined" style="color:var(--primary);font-size:20px;">health_and_safety</span>Student Health Monitor</h3>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <span style="font-size:12px;color:var(--muted);">Filter:</span>
+                        <select id="riskFilter" class="form-input" style="padding:6px 12px;font-size:12px;width:auto;" onchange="filterRiskTable()">
+                            <option value="all">All Students</option>
+                            <option value="critical">🔴 Critical</option>
+                            <option value="high">🟠 At Risk</option>
+                            <option value="medium">🟡 Monitor</option>
+                            <option value="low">🟢 Healthy</option>
+                        </select>
+                        <button class="btn-outline" style="font-size:12px;padding:6px 12px;" onclick="loadAIData()"><span class="material-symbols-outlined" style="font-size:14px;">refresh</span> Refresh</button>
+                    </div>
+                </div>
+                <div class="table-container table-responsive">
+                    <table id="riskTable">
+                        <thead><tr>
+                            <th>Student</th>
+                            <th>AI Health Score</th>
+                            <th>Risk Level</th>
+                            <th>CGPA</th>
+                            <th>Attendance</th>
+                            <th>Tasks Done</th>
+                            <th>Issues Detected</th>
+                            <th>AI Actions</th>
+                        </tr></thead>
+                        <tbody id="riskTableBody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;">Loading student health data...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -652,6 +730,21 @@
         </div>
     </div>
 
+    <!-- AI Smart Message Modal -->
+    <div class="modal-overlay" id="aiMsgModal">
+        <div class="modal-box admin-modal" style="max-width:650px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h2 style="display:flex;align-items:center;gap:10px;margin:0;">
+                    <span class="material-symbols-outlined" style="color:var(--primary)">auto_awesome</span>
+                    AI Smart Message
+                </h2>
+                <button onclick="closeAIMsgModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:24px;font-family:'Material Symbols Outlined';">close</button>
+            </div>
+            <p id="aiMsgStudentInfo" style="color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem;"></p>
+            <div id="aiSuggestions" style="display:flex;flex-direction:column;gap:10px;max-height:55vh;overflow-y:auto;padding-right:4px;"></div>
+        </div>
+    </div>
+
     <script src="/static/app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -688,12 +781,12 @@
                     btn.classList.add('active');
                     document.getElementById(tab).classList.add('active');
                     
-                    // Reload data if needed
                     if(tab === 'dashboard') loadStats();
                     if(tab === 'students') loadStudents();
                     if(tab === 'library') loadLibrary();
                     if(tab === 'logs') loadLogs();
                     if(tab === 'settings') loadSettings();
+                    if(tab === 'ai') loadAIData();
                 });
             });
         }
@@ -1149,7 +1242,7 @@
                     labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'],
                     datasets: [{
                         label: 'Avg CGPA',
-                        data: [3.4, 3.6, 3.5, 3.7, 3.8, s.avg_cgpa || 3.9],
+                        data: [7.4, 7.8, 8.0, 8.2, 8.5, s.avg_cgpa || 8.5],
                         backgroundColor: 'rgba(212, 175, 55, 0.6)',
                         borderColor: '#d4af37', borderWidth: 1, borderRadius: 5
                     }]
@@ -1157,7 +1250,7 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, max: 4.0, grid: { color: 'rgba(212,175,55,0.05)' } },
+                        y: { beginAtZero: false, min: 0, max: 10.0, grid: { color: 'rgba(212,175,55,0.05)' } },
                         x: { grid: { display: false } }
                     },
                     plugins: { legend: { display: false } }
@@ -1170,7 +1263,7 @@
             chartInstances.cgpa = new Chart(ctx2, {
                 type: 'doughnut',
                 data: {
-                    labels: ['High (≥3.5)', 'Mid (2.5-3.5)', 'Low (<2.5)'],
+                    labels: ['High (≥8.0)', 'Mid (5.0–8.0)', 'Low (<5.0)'],
                     datasets: [{
                         data: [cd.high, cd.mid, cd.low],
                         backgroundColor: ['#4caf50', '#d4af37', '#e06c75'],
@@ -1222,6 +1315,160 @@
                 }
             });
         });
+
+        // ═══════════════════════════════════════════
+        //  AI INTELLIGENCE ENGINE — JavaScript
+        // ═══════════════════════════════════════════
+        let _riskData = [];
+
+        async function loadAIData() {
+            // Load insights
+            const r = await api('GET', '/admin/api/ai/insights');
+            if(r.ok) {
+                const d = r.data;
+                document.getElementById('ai-class-health').textContent = d.class_health + '/100';
+                document.getElementById('ai-at-risk').textContent = d.at_risk_count;
+                document.getElementById('ai-high-perf').textContent = d.high_performers_count;
+                document.getElementById('ai-avg-cgpa').textContent = d.avg_cgpa;
+                document.getElementById('ai-avg-att').textContent = d.avg_attendance + '%';
+                renderInsights(d.insights, d.recommendations);
+            }
+            // Load risk table
+            const r2 = await api('GET', '/admin/api/ai/at-risk');
+            if(r2.ok) {
+                _riskData = r2.data;
+                renderRiskTable(_riskData);
+            }
+        }
+
+        function renderInsights(insights, recommendations) {
+            const colors = { danger:'var(--error)', warning:'#f0a500', success:'#4caf50', info:'#61afef' };
+            const bgs    = { danger:'rgba(224,108,117,0.08)', warning:'rgba(240,165,0,0.08)', success:'rgba(76,175,80,0.08)', info:'rgba(97,175,239,0.08)' };
+
+            const ic = document.getElementById('ai-insights-container');
+            if(!insights || !insights.length) {
+                ic.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);">No significant issues detected. All systems healthy! ✅</div>';
+            } else {
+                ic.innerHTML = insights.map(ins => `
+                    <div style="background:${bgs[ins.type]};border:1px solid ${colors[ins.type]}33;border-left:4px solid ${colors[ins.type]};border-radius:12px;padding:1rem 1.2rem;display:flex;align-items:flex-start;gap:12px;">
+                        <span class="material-symbols-outlined" style="color:${colors[ins.type]};font-size:22px;flex-shrink:0;margin-top:2px;">${ins.icon}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:700;color:var(--text-bright);font-size:0.92rem;">${ins.title}</div>
+                            <div style="color:var(--muted);font-size:0.82rem;margin-top:4px;line-height:1.5;">${ins.desc}</div>
+                            ${ins.names && ins.names.length ? `<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">${ins.names.map(n=>`<span style="background:${colors[ins.type]}22;border:1px solid ${colors[ins.type]}44;color:${colors[ins.type]};border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600;">${n}</span>`).join('')}</div>` : ''}
+                        </div>
+                        ${ins.count !== null ? `<span style="background:${colors[ins.type]};color:#fff;border-radius:20px;padding:2px 12px;font-size:14px;font-weight:800;flex-shrink:0;">${ins.count}</span>` : ''}
+                    </div>`).join('');
+            }
+
+            const rc = document.getElementById('ai-recommendations');
+            rc.innerHTML = recommendations.map((rec, i) => `
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:10px;background:var(--bg);border-radius:10px;border:1px solid var(--border);">
+                    <span style="background:var(--primary-dim);color:var(--primary);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">${i+1}</span>
+                    <span style="font-size:0.85rem;color:var(--text);line-height:1.5;">${rec}</span>
+                </div>`).join('');
+        }
+
+        function renderRiskTable(data) {
+            const tbody = document.getElementById('riskTableBody');
+            if(!data || !data.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;">No student data found.</td></tr>';
+                return;
+            }
+            const rColors = { critical:'var(--error)', high:'#f0a500', medium:'#61afef', low:'#4caf50' };
+            const rBg     = { critical:'rgba(224,108,117,0.12)', high:'rgba(240,165,0,0.12)', medium:'rgba(97,175,239,0.12)', low:'rgba(76,175,80,0.12)' };
+
+            tbody.innerHTML = data.map(s => {
+                const col = rColors[s.risk_level];
+                const issueChips = s.issues.length
+                    ? s.issues.map(i => `<span style="background:rgba(224,108,117,0.1);border:1px solid rgba(224,108,117,0.3);color:var(--error);border-radius:20px;padding:2px 8px;font-size:10px;">${i}</span>`).join(' ')
+                    : '<span style="color:var(--muted);font-size:11px;">None ✅</span>';
+                return `<tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:30px;height:30px;border-radius:50%;background:${rBg[s.risk_level]};color:${col};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid ${col}44;">${s.name.charAt(0)}</div>
+                            <div><div style="color:var(--text-bright);font-weight:600;font-size:0.88rem;">${s.name}</div><div style="color:var(--muted);font-size:0.75rem;">${s.student_id}</div></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="flex:1;height:6px;background:var(--border);border-radius:3px;min-width:60px;"><div style="height:6px;background:${col};border-radius:3px;width:${s.health_score}%;transition:width 0.8s;"></div></div>
+                            <span style="font-weight:700;color:${col};font-size:0.9rem;">${s.health_score}</span>
+                        </div>
+                    </td>
+                    <td><span style="background:${rBg[s.risk_level]};color:${col};border:1px solid ${col}44;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;">${s.risk_label}</span></td>
+                    <td style="color:var(--primary);font-weight:600;">${s.cgpa}</td>
+                    <td style="color:${s.attendance<60?'var(--error)':s.attendance<75?'#f0a500':'#4caf50'};font-weight:600;">${s.attendance}%</td>
+                    <td style="color:var(--text);">${s.task_completion}%</td>
+                    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">${issueChips}</div></td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <div class="btn-action" onclick="openAISmartMessage(${s.id},'${s.name}')" title="AI Smart Message" style="color:var(--primary);border-color:var(--primary);">
+                                <span class="material-symbols-outlined" style="font-size:16px;">auto_awesome</span>
+                            </div>
+                            <div class="btn-action" onclick="openMessageModal(${s.id},'${s.name}')" title="Send Message" style="color:#61afef;border-color:#61afef;">
+                                <span class="material-symbols-outlined" style="font-size:16px;">mail</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function filterRiskTable() {
+            const filter = document.getElementById('riskFilter').value;
+            const filtered = filter === 'all' ? _riskData : _riskData.filter(s => s.risk_level === filter);
+            renderRiskTable(filtered);
+        }
+
+        async function openAISmartMessage(sid, name) {
+            document.getElementById('aiMsgStudentInfo').textContent = `AI-generated message suggestions for ${name} based on their academic profile.`;
+            document.getElementById('aiSuggestions').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);"><span class="material-symbols-outlined" style="font-size:36px;animation:spin 1s linear infinite;">progress_activity</span><p>Generating AI suggestions...</p></div>';
+            document.getElementById('aiMsgModal').classList.add('active');
+
+            const r = await api('GET', `/admin/api/ai/smart-message/${sid}`);
+            if(!r.ok) { document.getElementById('aiSuggestions').innerHTML = '<p style="color:var(--error)">Failed to load suggestions.</p>'; return; }
+
+            const { suggestions, health_score, task_completion } = r.data;
+            const typeColors = { danger:'var(--error)', warning:'#f0a500', success:'#4caf50', info:'#61afef' };
+
+            document.getElementById('aiSuggestions').innerHTML = `
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:6px;display:flex;gap:16px;">
+                    <div style="text-align:center;"><div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;">Health Score</div><div style="font-size:1.4rem;font-weight:800;color:var(--primary);">${health_score}/100</div></div>
+                    <div style="text-align:center;"><div style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;">Task Completion</div><div style="font-size:1.4rem;font-weight:800;color:#61afef;">${task_completion}%</div></div>
+                </div>
+                <p style="color:var(--muted);font-size:0.8rem;margin-bottom:8px;">Select a suggestion to auto-fill the message form:</p>
+                ${suggestions.map(s => `
+                <div style="border:1px solid ${typeColors[s.type]}44;border-left:4px solid ${typeColors[s.type]};border-radius:10px;padding:1rem;background:${typeColors[s.type]}0d;cursor:pointer;transition:all 0.2s;" onclick="useAISuggestion(${sid},'${name.replace(/'/g,"\\'")}',${JSON.stringify(s.title).replace(/</g,'\\u003c')},${JSON.stringify(s.message).replace(/</g,'\\u003c')},'${s.type}')" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform=''">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-weight:700;color:${typeColors[s.type]};font-size:0.82rem;">${s.label}</span>
+                        <span style="font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:20px;">Click to use →</span>
+                    </div>
+                    <div style="font-weight:600;color:var(--text-bright);font-size:0.9rem;margin-bottom:4px;">${s.title}</div>
+                    <div style="color:var(--muted);font-size:0.8rem;line-height:1.5;">${s.message.substring(0,120)}...</div>
+                </div>`).join('')}`;
+        }
+
+        function useAISuggestion(sid, name, title, message, type) {
+            closeAIMsgModal();
+            document.getElementById('messageStudentId').value = sid;
+            document.getElementById('messageTarget').textContent = `Sending to: ${name}`;
+            document.getElementById('msgTitle').value = title;
+            document.getElementById('msgBody').value = message;
+            document.getElementById('msgType').value = type;
+            document.getElementById('messageModal').classList.add('active');
+        }
+
+        function closeAIMsgModal() {
+            document.getElementById('aiMsgModal').classList.remove('active');
+        }
+
+        async function broadcastFromAI(type, title, message) {
+            if(!confirm(`Send AI-generated broadcast?\n\nTitle: "${title}"\n\nThis will notify ALL students.`)) return;
+            const r = await api('POST', '/admin/api/broadcast', { title, message, type });
+            if(r.ok) showToast(`AI broadcast sent to ${r.data.count} students!`, 'campaign');
+            else showToast('Broadcast failed', 'error');
+        }
     </script>
 </body>
 </html>
