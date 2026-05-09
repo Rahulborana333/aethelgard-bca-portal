@@ -11,8 +11,14 @@ def send_due_reminders(app):
         print("[Scheduler] Running background task: Checking for upcoming deadlines...")
 
 
+import os
+
 def create_app():
     app = Flask(__name__)
+    
+    # Ensure instance folder exists for SQLite on production
+    os.makedirs(app.instance_path, exist_ok=True)
+    
     app.secret_key = 'aethelgard-bca-secret-2025-xK9mP2qR'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///aethelgard.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
